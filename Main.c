@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define CHUNK_SIZE 4096
 
@@ -90,6 +91,7 @@ void read_file_in_chunks(const char *filename)
 
 int main()
 {
+    printf("Lecture du fichier en chunks de %d octets\n", CHUNK_SIZE);
     const char *filename = "test.txt";
     read_file_in_chunks(filename);
     return 0;
