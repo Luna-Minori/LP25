@@ -69,6 +69,7 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
 
 int main()
 {
+	printf("Hello, World!\n");
 	Chunk chunks[2] = {{"data10", "d41d8cd98f00b204e9800998ecf8427e"},{"data2", "d41d8cd98f00b204e9800998ecf8428e"}};
 	char *fichier="test.txt";
 	sauvegarder(chunks, 2, fichier);
