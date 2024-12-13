@@ -1,6 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
+
+#define PRINT_TYPE(var) _Generic((var), \
+    int: "int", \
+    float: "float", \
+    double: "double", \
+    char: "char", \
+    char*: "char*", \
+    default: "unknown")
 
 typedef struct Chunk
 {
@@ -10,16 +19,80 @@ typedef struct Chunk
     int version;
 } Chunk;
 
-int existe_deja(const char *md5, FILE *file)
+void copier_fichier(FILE *source, FILE *dest) {
+    
+    rewind(source);
+    rewind(dest);
+
+    char buffer[1024];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), source)) > 0) {
+        fwrite(buffer, 1, bytes, dest);
+    }
+}
+
+int existe_deja_index(int index, FILE *file)
 {
-    char ligne[1024];
+    char ligne[4096];
+    int index_ligne=-1;
     rewind(file); // Rewind pour lire depuis le début du fichier
     while (fgets(ligne, sizeof(ligne), file))
     {
-        // Si une ligne commence par le MD5 du chunk, il existe déjà
-        if (strncmp(ligne, md5, 32) == 0)
+        if (ligne[32]==';'){
+            char temp_index[16]={};
+            int i = 33;
+            while (ligne[i] != ';'){
+                char temp[2] = {ligne[i]};
+                strncat(temp_index, temp, 1);
+                i++;
+            }
+            index_ligne = atoi(temp_index);
+        }
+        if (index == index_ligne)
         {
-            return 1; // Trouvé, il existe déjà
+            return 1; // Trouvé
+        }
+    }
+    return 0; // Pas trouvé
+}
+
+int existe_deja_version(int version, int index, FILE *file)
+{
+    char ligne[4096];
+    int version_ligne=-1;
+    int index_ligne=-1;
+    rewind(file); // Rewind pour lire depuis le début du fichier
+    while (fgets(ligne, sizeof(ligne), file))
+    {
+        if (ligne[0] != '\n' || strlen(ligne) > 33) {
+            
+            if (ligne[32]==';'){
+                char temp_version[16]={};
+                char temp_index[16]={};
+                int i = 33;
+                while (ligne[i] != ';'){
+                    char temp[2] = {ligne[i]};
+                    strncat(temp_index, temp, 1);
+                    i++;
+                }
+                index_ligne = atoi(temp_index);
+
+                if (index_ligne == index){
+                    
+                
+                    i++;
+                    while (ligne[i] != '\0'){
+                        char temp[2] = {ligne[i]};
+                        strncat(temp_version, temp, 1);
+                        i++;
+                    }
+                    version_ligne = atoi(temp_version);
+                }
+            }
+            if (version == version_ligne)
+            {
+                return 1; // Trouvé
+            }
         }
     }
     return 0; // Pas trouvé
@@ -27,12 +100,12 @@ int existe_deja(const char *md5, FILE *file)
 
 void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
 {
-    char filename[256];
+    char nom_fichier_sauvegarde[256];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", nom_fichier);
 
     if (!nom_fichier)
     {
-        snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", "default");
-        FILE *file = fopen(filename, "w"); // Créer un nouveau fichier en mode écriture
+        FILE *file = fopen(nom_fichier_sauvegarde, "w");
         
         if (file == NULL)
         {
@@ -43,8 +116,9 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
         return;
     }
 
-    snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", nom_fichier);
-    FILE *file = fopen(filename, "a+"); // Ouvrir le fichier en mode lecture-écriture
+    FILE *file = fopen(nom_fichier_sauvegarde, "a+"); // Ouvrir le fichier en mode lecture-écriture
+
+    printf("Ouverture du fichier %s\n", nom_fichier_sauvegarde);
 
     if (file == NULL)
     {
@@ -52,165 +126,66 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
         return;
     }
 
-    char ligne[1024];
+    char ligne[4096];
     long pos;  // Position de la ligne à remplacer
 
-    for (int i = 0; i < nombre_de_chunks; i++)
-    {
-        if (!existe_deja(chunks[i].MD5, file)) // Si le MD5 n'existe pas déjà
-        {
-            fprintf(file, "%s;%d\n%s\n", chunks[i].MD5, i, chunks[i].data);
-        }
-        else
-        {
-            rewind(file); // Rewind pour lire depuis le début du fichier
-            while (fgets(ligne, sizeof(ligne), file))
-            {
-                pos = ftell(file); 
+    char nom_fichier_temp[256];
+    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_sauvegarde_tmp.txt", nom_fichier);
 
-                // Si on trouve le MD5 du chunk, on remplace la ligne
-                if (strncmp(ligne, chunks[i].MD5, 32) == 0)
-                {
-                	fgets(ligne, sizeof(ligne), file);
-                    if (strncmp(ligne, chunks[i].data, 32) != 0){
-                        fseek(file, pos, SEEK_SET); 
-                        fprintf(file, "%s\n", chunks[i].data);
-                        fflush(file); 
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    fclose(file);
-}
-
-void write_backup(char *nom_fichier){
-
-    if (!nom_fichier)
-    {
-        snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", "default");
-        FILE *file = fopen(filename, "w"); // Créer un nouveau fichier en mode écriture
-        
-        if (file == NULL)
-        {
-            perror("Erreur de création du fichier");
-            return;
-        }
+    FILE *temp_file = fopen(nom_fichier_temp, "w");
+    if (temp_file == NULL) {
+        perror("Erreur de création du fichier temporaire");
         fclose(file);
         return;
     }
 
-    snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", nom_fichier);
-    FILE *file = fopen(filename, "a+"); // Ouvrir le fichier en mode lecture-écriture
-
-    if (file == NULL)
-    {
-        perror("Erreur d'ouverture du fichier");
-        return;
-    }
-
-    char ligne[1024];
-    long pos;  // Position de la ligne à remplacer
+    copier_fichier(file, temp_file);
 
     for (int i = 0; i < nombre_de_chunks; i++)
-    {
-        if (!existe_deja(chunks[i].MD5, file)) // Si le MD5 n'existe pas déjà
+    {   
+        if (!existe_deja_index(chunks[i].index, file)) // Si le chunk n'existe pas, on l'ajoute
         {
-            fprintf(file, "%s;%d\n%s\n", chunks[i].MD5, i, chunks[i].data);
+            printf("l'index %d n'existe pas\n", chunks[i].index);
+            fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version, chunks[i].data);
         }
         else
         {
-            rewind(file); // Rewind pour lire depuis le début du fichier
-            while (fgets(ligne, sizeof(ligne), file))
+            if (!existe_deja_version(chunks[i].version, chunks[i].index, file)) // Si la version n'existe pas, on l'ajoute
             {
-                pos = ftell(file); // Enregistrer la position actuelle
-
-                // Si on trouve le MD5 du chunk, on remplace la ligne
-                if (strncmp(ligne, chunks[i].MD5, 32) == 0)
-                {
-                	fgets(ligne, sizeof(ligne), file);
-                    if (strncmp(ligne, chunks[i].data, 32) != 0){
-                        fseek(file, pos, SEEK_SET); // Revenir à la position de la ligne à remplacer
-                        fprintf(file, "%s\n", chunks[i].data); // Remplacer la ligne avec les nouvelles données
-                        fflush(file); // S'assurer que les données sont écrites immédiatement
-                        break;
-                    }
-                }
+                printf("la version %d n'existe pas\n", chunks[i].version);
+                fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version, chunks[i].data);
             }
+            
         }
     }
 
     fclose(file);
-}
+    fclose(temp_file);
 
-void write_backup(char *nom_fichier){
-
-    if (!nom_fichier)
-    {
-        snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", "default");
-        FILE *file = fopen(filename, "w"); // Créer un nouveau fichier en mode écriture
-        
-        if (file == NULL)
-        {
-            perror("Erreur de création du fichier");
-            return;
-        }
-        fclose(file);
+    // Remplacer l'ancien fichier par le fichier temporaire
+    if (remove(nom_fichier_sauvegarde) != 0) {
+        perror("Erreur de suppression de l'ancien fichier");
         return;
     }
 
-    snprintf(filename, sizeof(filename), "%s_sauvegarde.txt", nom_fichier);
-    FILE *file = fopen(filename, "a+"); // Ouvrir le fichier en mode lecture-écriture
-
-    if (file == NULL)
-    {
-        perror("Erreur d'ouverture du fichier");
+    if (rename(nom_fichier_temp, nom_fichier_sauvegarde) != 0) {
+        perror("Erreur de renommage du fichier temporaire");
         return;
     }
 
-    char ligne[1024];
-    long pos;  // Position de la ligne à remplacer
-
-    for (int i = 0; i < nombre_de_chunks; i++)
-    {
-        if (!existe_deja(chunks[i].MD5, file)) // Si le MD5 n'existe pas déjà
-        {
-            fprintf(file, "%s;%d\n%s\n", chunks[i].MD5, i, chunks[i].data);
-        }
-        else
-        {
-            rewind(file); // Rewind pour lire depuis le début du fichier
-            while (fgets(ligne, sizeof(ligne), file))
-            {
-                pos = ftell(file); // Enregistrer la position actuelle
-
-                // Si on trouve le MD5 du chunk, on remplace la ligne
-                if (strncmp(ligne, chunks[i].MD5, 32) == 0)
-                {
-                	fgets(ligne, sizeof(ligne), file);
-                    if (strncmp(ligne, chunks[i].data, 32) != 0){
-                        fseek(file, pos, SEEK_SET); // Revenir à la position de la ligne à remplacer
-                        fprintf(file, "%s\n", chunks[i].data); // Remplacer la ligne avec les nouvelles données
-                        fflush(file); // S'assurer que les données sont écrites immédiatement
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    fclose(file);
+    printf("Le fichier a été modifié avec succès.\n");
 }
+
+
 
 int main()
 {
-    Chunk chunks[2] = {
-        {"data5", "d41d8cd98f00b204e9800998ecf8427e"},
-        {"data6", "d41d8cd98f00b204e9800998ecf8428e"}};
+    Chunk un = {"data5", "d41d8cd98f00b204e9800998ecf8427e", 2, 1};
+    Chunk deux = {"data6", "d41d8cd98f00b204e9800998ecf8428e", 2, 3};
 
-    // Exemple de nom de fichier de base
+    Chunk chunks[2] = {un, deux};
+
+
     char *nom_fichier = "fichier_test";
 
     sauvegarder(chunks, 2, nom_fichier);
