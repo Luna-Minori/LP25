@@ -5,8 +5,9 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <unistd.h>
+#include "backup_manager.h"
+#include "file_modifier.h"
 #include "file_handler.h"
-
 
 #define PRINT_TYPE(var) _Generic((var), \
     int: "int", \
@@ -15,14 +16,6 @@
     char: "char", \
     char*: "char*", \
     default: "unknown")
-
-typedef struct Chunk
-{
-    char *data;
-    char MD5[33];
-    int index;
-    int version;
-} Chunk;
 
 void copier_fichier(FILE *source, FILE *dest, int ligne_debut) { // copie un fichier dans un autre fichier
     

@@ -4,6 +4,7 @@
 
 #include "backup_manager.h"
 #include "file_handler.h"
+#include "file_modifier.h"
 
 // Déclarations des fonctions et structures utilisées dans Main.c
 // Ajoutez ici toute autre déclaration nécessaire

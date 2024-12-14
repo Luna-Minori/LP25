@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "file_handler.h"
+#include "file_modifier.h"
 #include "backup_manager.h"
 
 #define HASH_TABLE_SIZE 4096
@@ -37,7 +38,7 @@ void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md
     fclose(file);
 }
 
-void compute_md5_chunk(const unsigned char *data, size_t taille, char *md5_string) {
+void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
     EVP_MD_CTX *ctx;
     unsigned char md5_digest[EVP_MAX_MD_SIZE];
     unsigned int md5_length;
@@ -82,12 +83,12 @@ void compute_chunk(const char *nom_fichier, Chunk *chunks) { // découpe un fich
         return;
     }
 
-    unsigned char chunk[HASH_TABLE_SIZE];
+    char chunk[HASH_TABLE_SIZE];
     size_t bytes_lus;
     int chunk_index = 0;
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5(nom_fichier, md5, &md5_len);
+	compute_md5_file(nom_fichier, md5, &md5_len);
 
     while ((bytes_lus = fread(chunk, 1, HASH_TABLE_SIZE, fichier_entree)) > 0) { // découpe le fichier en chunk
         chunks->data = chunk;

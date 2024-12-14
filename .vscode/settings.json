@@ -60,6 +60,10 @@
     "stdio.h": "c",
     "stdint.h": "c",
     "stdlib.h": "c",
-    "evp.h": "c"
+    "evp.h": "c",
+    "backup_manager.h": "c",
+    "unistd.h": "c",
+    "file_modifier.h": "c",
+    "string.h": "c"
   }
 }

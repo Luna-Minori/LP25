@@ -1,33 +1,19 @@
-#CC = gcc
-#CFLAGS = -Wall
-#LIBS = -lssl -lcrypto
-#TARGET = file_handler
-#SRCS = $(wildcard *.c)
-#OBJS = $(SRCS:.c=.o)
-
-#all: $(TARGET)
-
-#$(TARGET): $(OBJS)
-#	#$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
-
-#%.o: %.c
-#	$(CC) $(CFLAGS) -c $< -o $@
-
-#clean:
-#	rm -f $(TARGET) $(OBJS)
-
 CC = gcc
 CFLAGS = -Wall -g
 LDFLAGS = -lssl -lcrypto
 
 # List of object files
-OBJS = backup_manager.o file_handler.o Main.o
+OBJS = backup_manager.o file_handler.o Main.o file_modifier.o
 
 # Target to build the executable
 Main: $(OBJS)
 	$(CC) $(CFLAGS) -o Main $(OBJS) $(LDFLAGS)
 
 # Rules to build object files
+
+file_modifier.o: file_modifier.c file_modifier.h
+	$(CC) $(CFLAGS) -c file_modifier.c $(LDFLAGS)
+
 backup_manager.o: backup_manager.c backup_manager.h
 	$(CC) $(CFLAGS) -c backup_manager.c
 

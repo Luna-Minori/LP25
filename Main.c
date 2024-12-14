@@ -7,8 +7,9 @@
 #include <openssl/evp.h>
 #include "file_handler.h"
 #include "backup_manager.h"
+#include "file_modifier.h"
 
-#define CHUNK_SIZE 4096
+
 
 /*
 int read_case_backup(char *path, char *file_md5) {
@@ -61,154 +62,6 @@ void md5_chunk(const unsigned char *data, size_t length, unsigned char *output) 
     EVP_MD_CTX_free(mdctx);  // Libérer le contexte
 }
 */
-char **read_file_lines(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Erreur: Impossible d'ouvrir le fichier");
-        return NULL;
-    }
-
-    char **lines = NULL;
-    char buffer[1024];
-    int num_lines = 0;
-
-    while (fgets(buffer, sizeof(buffer), file)) {
-        lines = realloc(lines, (num_lines + 1) * sizeof(char *));
-        if (lines == NULL) {
-            perror("Erreur: Allocation mémoire échouée");
-            fclose(file);
-            return NULL;
-        }
-        lines[num_lines] = strdup(buffer);
-        if (lines[num_lines] == NULL) {
-            perror("Erreur: Allocation mémoire échouée");
-            fclose(file);
-            return NULL;
-        }
-        num_lines++;
-    }
-
-    lines = realloc(lines, (num_lines + 1) * sizeof(char *));
-    if (lines == NULL) {
-        perror("Erreur: Allocation mémoire échouée");
-        fclose(file);
-        return NULL;
-    }
-    lines[num_lines] = NULL; // Add null terminator
-
-    fclose(file);
-    return lines;
-}
-
-char *read_file(char *filename)
-{
-    FILE *file = fopen(filename, "rb");
-    if (file == NULL)
-    {
-        perror("Erreur: Impossible d'ouvrir le fichier");
-        return NULL;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    if (file_size == -1L)
-    {
-        perror("Erreur: Taille du fichier inconnue");
-        fclose(file);
-        return NULL;
-    }
-    rewind(file);
-
-    char *content = (char *)malloc(file_size + 1);
-    if (content == NULL)
-    {
-        printf("Erreur: Allocation mémoire échouée.\n");
-        fclose(file);
-        return NULL;
-    }
-
-    size_t total_read = 0;
-    size_t chunk_size = 1024;
-    while (total_read < file_size)
-    {
-        size_t bytes_to_read = (file_size - total_read < chunk_size) ? file_size - total_read : chunk_size;
-        size_t read_size = fread(content + total_read, 1, bytes_to_read, file);
-        if (read_size != bytes_to_read)
-        {
-            perror("Erreur lors de la lecture du fichier");
-            free(content);
-            fclose(file);
-            return NULL;
-        }
-        total_read += read_size;
-    }
-
-    content[file_size] = '\0';
-
-    if (ferror(file))
-    {
-        perror("Erreur lors de la lecture du fichier");
-        free(content);
-        fclose(file);
-        return NULL;
-    }
-
-    fclose(file);
-    return content;
-}
-
-
-int read_savefile_in_chunks(char *filename, Chunk *chunks)
-{
-    printf("%s\n", filename);
-    char **file_content = read_file_lines(filename);
-    if (file_content == NULL)
-    {
-        return 0;
-    }
-
-    int nombre_lignes = 0;
-    while (file_content[nombre_lignes] != NULL) {
-        nombre_lignes++;
-    }
-
-    int nombre_chunks = (nombre_lignes - 1) / 2;
-
-    for (int i = 0; i < nombre_chunks; i++)
-    {
-        Chunk chunk;
-        char ligne[4096] = {};
-        strncpy(ligne, file_content[i * 2 + 1], sizeof(ligne) - 1); // Dereference file_content
-        chunk.data = strdup(file_content[i * 2 + 2]); // Copy the data
-
-        strncpy(chunk.MD5, ligne, 32);
-        char temp_index[16] = {};
-        int k = 33;
-        while (ligne[k] != ';')
-        {
-            char temp[2] = {ligne[k], '\0'};
-            strncat(temp_index, temp, 1);
-            k++;
-        }
-        chunk.index = atoi(temp_index);
-        char temp_version[16] = {};
-        k++;
-        while (ligne[k] != '\0')
-        {
-            char temp[2] = {ligne[k], '\0'};
-            strncat(temp_version, temp, 1);
-            k++;
-        }
-        chunk.version = atoi(temp_version);
-
-        chunks[i] = chunk;
-    }
-    free(file_content);
-    return 1;
-}
-
-
-
 
 /*
 // Fonction pour reconstruire le fichier
@@ -303,9 +156,10 @@ int main() {
 int main()
 {
 
+    
+    char *nom_fichier = "fichier_test";
 
-    Chunk chunks[100];
-    read_file_in_chunks("3133d9dc0f9acc5151edaf9e3ce74966_sauvegarde.txt", chunks);
+    recup_save_content(nom_fichier, 2);
     printf("sortie\n");
 
     /*
