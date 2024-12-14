@@ -2,12 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-#include <openssl/md5.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
+#include "file_handler.h"
+#include "backup_manager.h"
 
 #define CHUNK_SIZE 4096
 
+/*
 int read_case_backup(char *path, char *file_md5) {
     struct dirent *entry;
     DIR *dp = opendir(path);
@@ -26,7 +29,8 @@ int read_case_backup(char *path, char *file_md5) {
     closedir(dp);
     return 0; // Fichier non trouvé
 }
-
+*/
+/*
 void md5_chunk(const unsigned char *data, size_t length, unsigned char *output) {
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL) {
@@ -56,46 +60,44 @@ void md5_chunk(const unsigned char *data, size_t length, unsigned char *output) 
 
     EVP_MD_CTX_free(mdctx);  // Libérer le contexte
 }
-
-void md5_file(const char *filename, unsigned char *output) {
-    FILE *file = fopen(filename, "rb");
+*/
+char **read_file_lines(const char *filename) {
+    FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("Erreur d'ouverture du fichier");
-        return;
+        perror("Erreur: Impossible d'ouvrir le fichier");
+        return NULL;
     }
 
-    unsigned char buffer[1024];  // Tampon de lecture (taille de chunk)
-    size_t bytes_read;
-    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-    if (mdctx == NULL) {
-        perror("Erreur d'initialisation de EVP_MD_CTX");
-        fclose(file);
-        return;
-    }
+    char **lines = NULL;
+    char buffer[1024];
+    int num_lines = 0;
 
-    // Initialisation de l'algorithme MD5
-    if (EVP_DigestInit_ex(mdctx, EVP_md5(), NULL) != 1) {
-        perror("Erreur d'initialisation de MD5");
-        EVP_MD_CTX_free(mdctx);
-        fclose(file);
-        return;
-    }
-
-    // Lire le fichier par morceaux et mettre à jour le MD5
-    while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        if (EVP_DigestUpdate(mdctx, buffer, bytes_read) != 1) {
-            perror("Erreur de mise à jour du MD5");
-            break;
+    while (fgets(buffer, sizeof(buffer), file)) {
+        lines = realloc(lines, (num_lines + 1) * sizeof(char *));
+        if (lines == NULL) {
+            perror("Erreur: Allocation mémoire échouée");
+            fclose(file);
+            return NULL;
         }
+        lines[num_lines] = strdup(buffer);
+        if (lines[num_lines] == NULL) {
+            perror("Erreur: Allocation mémoire échouée");
+            fclose(file);
+            return NULL;
+        }
+        num_lines++;
     }
 
-    unsigned int md_len;
-    if (EVP_DigestFinal_ex(mdctx, output, &md_len) != 1) {
-        perror("Erreur de finalisation du MD5");
+    lines = realloc(lines, (num_lines + 1) * sizeof(char *));
+    if (lines == NULL) {
+        perror("Erreur: Allocation mémoire échouée");
+        fclose(file);
+        return NULL;
     }
+    lines[num_lines] = NULL; // Add null terminator
 
-    EVP_MD_CTX_free(mdctx);  // Libérer le contexte
-    fclose(file);  // Fermer le fichier
+    fclose(file);
+    return lines;
 }
 
 char *read_file(char *filename)
@@ -155,35 +157,60 @@ char *read_file(char *filename)
     return content;
 }
 
-void read_file_in_chunks(char *filename)
+
+int read_savefile_in_chunks(char *filename, Chunk *chunks)
 {
-    char *file_content = read_file(filename);
+    printf("%s\n", filename);
+    char **file_content = read_file_lines(filename);
     if (file_content == NULL)
     {
-        return;
+        return 0;
     }
 
-    size_t file_size = strlen(file_content);
+    int nombre_lignes = 0;
+    while (file_content[nombre_lignes] != NULL) {
+        nombre_lignes++;
+    }
 
-    size_t total_chunks = (file_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+    int nombre_chunks = (nombre_lignes - 1) / 2;
 
-    for (size_t i = 0; i < total_chunks; ++i)
+    for (int i = 0; i < nombre_chunks; i++)
     {
-        size_t chunk_start = i * CHUNK_SIZE;
-        size_t chunk_end = (i + 1) * CHUNK_SIZE;
-        if (chunk_end > file_size)
-        {
-            chunk_end = file_size;
-        }
+        Chunk chunk;
+        char ligne[4096] = {};
+        strncpy(ligne, file_content[i * 2 + 1], sizeof(ligne) - 1); // Dereference file_content
+        chunk.data = strdup(file_content[i * 2 + 2]); // Copy the data
 
-        printf("Chunk %zu (%zu octets) :\n", i + 1, chunk_end - chunk_start);
-        fwrite(file_content + chunk_start, 1, chunk_end - chunk_start, stdout);
-        printf("\n---\n");
+        strncpy(chunk.MD5, ligne, 32);
+        char temp_index[16] = {};
+        int k = 33;
+        while (ligne[k] != ';')
+        {
+            char temp[2] = {ligne[k], '\0'};
+            strncat(temp_index, temp, 1);
+            k++;
+        }
+        chunk.index = atoi(temp_index);
+        char temp_version[16] = {};
+        k++;
+        while (ligne[k] != '\0')
+        {
+            char temp[2] = {ligne[k], '\0'};
+            strncat(temp_version, temp, 1);
+            k++;
+        }
+        chunk.version = atoi(temp_version);
+
+        chunks[i] = chunk;
     }
     free(file_content);
+    return 1;
 }
 
 
+
+
+/*
 // Fonction pour reconstruire le fichier
 void recup_save_content(char *path)
 {
@@ -212,7 +239,8 @@ void recup_save_content(char *path)
         content = read_file(file_name);
         printf("%s", content);
     }
-    /*
+    
+    
     char line[MAX_LINE_LENGTH];
     char md5[33];
     int index, version;
@@ -249,6 +277,14 @@ void recup_save_content(char *path)
     fclose(output);
     printf("Fichier reconstruit avec succes : %s\n", output_file);
 }
+*/
+
+/*
+void recup_save_content(char nom_fichier[256], int version){
+
+}
+*/
+/*
 
 // Fonction principale pour tester
 int main() {
@@ -258,16 +294,39 @@ int main() {
     int target_version = 1;                 // Version cible
 
     reconstruct_file(input_txt, output_file, target_md5, target_version);
-*/
+
     return;
 }
 
+*/
 
 int main()
 {
-    //printf("Lecture du fichier en chunks de %d octets\n", CHUNK_SIZE);
-    char *filename = "test.txt";
-    recup_save_content(filename);
-    //read_file_in_chunks(filename);
+
+
+    Chunk chunks[100];
+    read_file_in_chunks("3133d9dc0f9acc5151edaf9e3ce74966_sauvegarde.txt", chunks);
+    printf("sortie\n");
+
+    /*
+    Chunk un = {"data1", "d41d8cd98f00b204e9800998ecf8427e", 1, 1}; //oui
+    Chunk deux = {"data2", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // oui
+	Chunk trois = {"data3", "d41d8cd98f00b204e9800998ecf8427e", 1, 2}; // oui
+    Chunk quatre = {"data4", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // non
+	Chunk cinq = {"data5", "d41d8cd98f00b204e9800998ecf8427e", 2, 2}; // oui
+    Chunk six = {"data6", "d41d8cd98f00b204e9800998ecf8428e", 3, 1}; // oui
+
+    Chunk chunks1[5] = {un, deux, trois, cinq, six};
+	Chunk chunks2[3] = {un, six, quatre};
+
+    char *nom_fichier = "fichier_test";
+
+    sauvegarder(chunks1, 5, nom_fichier);
+	printf("ça c'eST FAIT\n");
+	sauvegarder(chunks2, 3, nom_fichier);
+    */
+    
+    //read_file_in_chunks("fichier_test.txt");
+    
     return 0;
 }

@@ -3,9 +3,11 @@
 #include <openssl/evp.h>
 #include <stdint.h>
 #include <string.h>
+#include "file_handler.h"
+#include "backup_manager.h"
 
 #define HASH_TABLE_SIZE 4096
-
+/*
 unsigned int hash_md5(unsigned char *md5) {
     unsigned int hash = 0;
     for (int i = 0; i < EVP_MD_size(EVP_md5()); i++) {
@@ -13,15 +15,12 @@ unsigned int hash_md5(unsigned char *md5) {
     }
     return hash % HASH_TABLE_SIZE;
 }
-
-int main() {
-    unsigned char md5[EVP_MAX_MD_SIZE];
-    unsigned int md5_len;
-    char *filename = "fichier_test.txt";
+*/
+void compute_md5(const char *filename, unsigned char *md5, unsigned int *md5_len) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("Erreur d'ouverture du fichier");
-        return 1;
+        exit(1);
     }
 
     EVP_MD_CTX *context = EVP_MD_CTX_new();
@@ -33,9 +32,18 @@ int main() {
         EVP_DigestUpdate(context, buffer, bytes);
     }
 
-    EVP_DigestFinal_ex(context, md5, &md5_len);
+    EVP_DigestFinal_ex(context, md5, md5_len);
     EVP_MD_CTX_free(context);
     fclose(file);
+}
+
+/*
+int main() {
+    unsigned char md5[EVP_MAX_MD_SIZE];
+    unsigned int md5_len;
+    char *filename = "fichier_test.txt";
+
+    compute_md5(filename, md5, &md5_len);
 
     printf("MD5 hash: ");
     for (unsigned int i = 0; i < md5_len; i++) {
@@ -45,3 +53,4 @@ int main() {
 
     return 0;
 }
+*/

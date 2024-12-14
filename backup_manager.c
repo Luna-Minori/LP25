@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <openssl/evp.h>
+#include <unistd.h>
+#include "file_handler.h"
+
 
 #define PRINT_TYPE(var) _Generic((var), \
     int: "int", \
@@ -19,12 +24,19 @@ typedef struct Chunk
     int version;
 } Chunk;
 
-void copier_fichier(FILE *source, FILE *dest) {
+void copier_fichier(FILE *source, FILE *dest, int ligne_debut) {
     
     rewind(source);
-    rewind(dest);
+    //rewind(dest);
 
-    char buffer[1024];
+    for (int i = 0; i < ligne_debut; i++)
+    {
+        char ligne[4096];
+        fgets(ligne, sizeof(ligne), source);
+        printf("Ligne %d : %s\n", i, ligne);
+    }
+
+    char buffer[4096];
     size_t bytes;
     while ((bytes = fread(buffer, 1, sizeof(buffer), source)) > 0) {
         fwrite(buffer, 1, bytes, dest);
@@ -36,21 +48,24 @@ int existe_deja_index(int index, FILE *file)
     char ligne[4096];
     int index_ligne=-1;
     rewind(file); // Rewind pour lire depuis le début du fichier
+    fgets(ligne, sizeof(ligne), file);
     while (fgets(ligne, sizeof(ligne), file))
     {
-        if (ligne[32]==';'){
-            char temp_index[16]={};
-            int i = 33;
-            while (ligne[i] != ';'){
-                char temp[2] = {ligne[i]};
-                strncat(temp_index, temp, 1);
-                i++;
+        if (ligne[0] != '\n' || strlen(ligne) > 33) {
+            if (ligne[32]==';'){
+                char temp_index[16]={};
+                int i = 33;
+                while (ligne[i] != ';'){
+                    char temp[2] = {ligne[i]};
+                    strncat(temp_index, temp, 1);
+                    i++;
+                }
+                index_ligne = atoi(temp_index);
             }
-            index_ligne = atoi(temp_index);
-        }
-        if (index == index_ligne)
-        {
-            return 1; // Trouvé
+            if (index == index_ligne)
+            {
+                return 1; // Trouvé
+            }
         }
     }
     return 0; // Pas trouvé
@@ -62,6 +77,7 @@ int existe_deja_version(int version, int index, FILE *file)
     int version_ligne=-1;
     int index_ligne=-1;
     rewind(file); // Rewind pour lire depuis le début du fichier
+    fgets(ligne, sizeof(ligne), file);  
     while (fgets(ligne, sizeof(ligne), file))
     {
         if (ligne[0] != '\n' || strlen(ligne) > 33) {
@@ -100,11 +116,22 @@ int existe_deja_version(int version, int index, FILE *file)
 
 void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
 {
-    char nom_fichier_sauvegarde[256];
-    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", nom_fichier);
+	unsigned char md5[EVP_MAX_MD_SIZE];
+    unsigned int md5_len;
+	compute_md5(nom_fichier, md5, &md5_len);
+	char md5_fichier[33];
+    for (int i = 0; i < 16; ++i) {
+        snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
+    }
+	
+	char nom_fichier_sauvegarde[50];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
 
-    if (!nom_fichier)
+	printf("quoicoubeh\n");
+
+    if (access(nom_fichier_sauvegarde, F_OK) == -1)
     {
+        printf("Le fichier n'existe pas, on le crée\n");
         FILE *file = fopen(nom_fichier_sauvegarde, "w");
         
         if (file == NULL)
@@ -112,8 +139,10 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
             perror("Erreur de création du fichier");
             return;
         }
+
+        fprintf(file, "%d\n",0);
         fclose(file);
-        return;
+        //return;
     }
 
     FILE *file = fopen(nom_fichier_sauvegarde, "a+"); // Ouvrir le fichier en mode lecture-écriture
@@ -127,8 +156,8 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
     }
 
 
-    char nom_fichier_temp[256];
-    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_sauvegarde_tmp.txt", nom_fichier);
+    char nom_fichier_temp[60];
+    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_sauvegarde_tmp.txt", md5_fichier);
 
     FILE *temp_file = fopen(nom_fichier_temp, "w");
     if (temp_file == NULL) {
@@ -137,7 +166,23 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
         return;
     }
 
-    copier_fichier(file, temp_file);
+    
+    char version_temp[16]={};
+    char ligne_version[16]={};
+    fgets(ligne_version, sizeof(ligne_version), file);
+    int k = 0;
+    while (ligne_version[k] != '\0'){
+        char tempV[2] = {ligne_version[k]};
+        strncat(version_temp, tempV, 1);
+        k++;
+    }
+    
+
+    fprintf(temp_file, "%d\n",atoi(version_temp)+1);
+
+    
+
+    copier_fichier(file, temp_file, 1);
 
     for (int i = 0; i < nombre_de_chunks; i++)
     {   
@@ -175,18 +220,25 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
 }
 
 
-
+/*
 int main()
 {
-    Chunk un = {"data5", "d41d8cd98f00b204e9800998ecf8427e", 2, 1};
-    Chunk deux = {"data6", "d41d8cd98f00b204e9800998ecf8428e", 2, 3};
+    Chunk un = {"data1", "d41d8cd98f00b204e9800998ecf8427e", 1, 1}; //oui
+    Chunk deux = {"data2", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // oui
+	Chunk trois = {"data3", "d41d8cd98f00b204e9800998ecf8427e", 1, 2}; // oui
+    Chunk quatre = {"data4", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // non
+	Chunk cinq = {"data5", "d41d8cd98f00b204e9800998ecf8427e", 2, 2}; // oui
+    Chunk six = {"data6", "d41d8cd98f00b204e9800998ecf8428e", 3, 1}; // oui
 
-    Chunk chunks[2] = {un, deux};
-
+    Chunk chunks1[5] = {un, deux, trois , cinq, six};
+	Chunk chunks2[2] = {un, six};
 
     char *nom_fichier = "fichier_test";
 
-    sauvegarder(chunks, 2, nom_fichier);
+    sauvegarder(chunks1, 5, nom_fichier);
+	printf("ça c'eST FAIT\n");
+	sauvegarder(chunks2, 2, nom_fichier);
     return 0;
 }
+*/
 
