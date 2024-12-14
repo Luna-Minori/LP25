@@ -16,7 +16,7 @@ unsigned int hash_md5(unsigned char *md5) {
     return hash % HASH_TABLE_SIZE;
 }
 */
-void compute_md5(const char *filename, unsigned char *md5, unsigned int *md5_len) {
+void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md5_len) { // genere un md5
     FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("Erreur d'ouverture du fichier");
@@ -37,20 +37,66 @@ void compute_md5(const char *filename, unsigned char *md5, unsigned int *md5_len
     fclose(file);
 }
 
-/*
-int main() {
+void compute_md5_chunk(const unsigned char *data, size_t taille, char *md5_string) {
+    EVP_MD_CTX *ctx;
+    unsigned char md5_digest[EVP_MAX_MD_SIZE];
+    unsigned int md5_length;
+
+    ctx = EVP_MD_CTX_new();
+    if (!ctx) {
+        fprintf(stderr, "Erreur : impossible d'initialiser EVP_MD_CTX\n");
+        return;
+    }
+
+    if (EVP_DigestInit_ex(ctx, EVP_md5(), NULL) != 1) {
+        fprintf(stderr, "Erreur : EVP_DigestInit_ex a échoué\n");
+        EVP_MD_CTX_free(ctx);
+        return;
+    }
+
+    if (EVP_DigestUpdate(ctx, data, taille) != 1) {
+        fprintf(stderr, "Erreur : EVP_DigestUpdate a échoué\n");
+        EVP_MD_CTX_free(ctx);
+        return;
+    }
+
+    if (EVP_DigestFinal_ex(ctx, md5_digest, &md5_length) != 1) {
+        fprintf(stderr, "Erreur : EVP_DigestFinal_ex a échoué\n");
+        EVP_MD_CTX_free(ctx);
+        return;
+    }
+
+    EVP_MD_CTX_free(ctx);
+
+    for (unsigned int i = 0; i < md5_length; i++) {
+        sprintf(&md5_string[i * 2], "%02x", md5_digest[i]);
+    }
+    md5_string[md5_length * 2] = '\0';
+}
+
+
+void compute_chunk(const char *nom_fichier, Chunk *chunks) { // découpe un fichier en chunk
+    FILE *fichier_entree = fopen(nom_fichier, "rb");
+    if (fichier_entree == NULL) {
+        perror("Erreur lors de l'ouverture du fichier d'entrée");
+        return;
+    }
+
+    unsigned char chunk[HASH_TABLE_SIZE];
+    size_t bytes_lus;
+    int chunk_index = 0;
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-    char *filename = "fichier_test.txt";
+	compute_md5(nom_fichier, md5, &md5_len);
 
-    compute_md5(filename, md5, &md5_len);
-
-    printf("MD5 hash: ");
-    for (unsigned int i = 0; i < md5_len; i++) {
-        printf("%02x", md5[i]);
+    while ((bytes_lus = fread(chunk, 1, HASH_TABLE_SIZE, fichier_entree)) > 0) { // découpe le fichier en chunk
+        chunks->data = chunk;
+        chunks->index = chunk_index;
+        chunks->version = 1;
+        compute_md5_chunk(chunk, strlen(chunk), chunks->MD5);
+        chunk_index++;
     }
-    printf("\n");
 
-    return 0;
+    fclose(fichier_entree);
+    printf("Découpage terminé. %d chunks lus.\n", chunk_index);
 }
-*/

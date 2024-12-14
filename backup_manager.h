@@ -1,7 +1,7 @@
 // backup_manager.h
 #ifndef BACKUP_MANAGER_H
 #define BACKUP_MANAGER_H
-
+#include "file_modifier.h"
 typedef struct Chunk {
     char *data;
     char MD5[33];
