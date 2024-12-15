@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "backup_manager.h"
 #include "file_modifier.h"
 #include "file_handler.h"
@@ -112,6 +113,7 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
 	unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
 	compute_md5_file(nom_fichier, md5, &md5_len);
+
 	char md5_fichier[33];
     for (int i = 0; i < 16; ++i) {
         snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
