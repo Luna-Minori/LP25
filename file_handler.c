@@ -101,3 +101,4 @@ void compute_chunk(const char *nom_fichier, Chunk *chunks) { // découpe un fich
     fclose(fichier_entree);
     printf("Découpage terminé. %d chunks lus.\n", chunk_index);
 }
+
