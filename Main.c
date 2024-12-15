@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <openssl/evp.h>
+#include <libgen.h>
 #include "file_handler.h"
 #include "backup_manager.h"
 #include "file_modifier.h"
@@ -155,13 +156,34 @@ int main() {
 
 int main()
 {
-
+    Chunk chunks[100];
     
-    char *nom_fichier = "fichier_test";
+    char *nom_fichier = "fichier_test.txt";
+
+    compute_chunk(nom_fichier, chunks);
+    printf("data 1 : %s\n", chunks[0].data);
+    printf("data 2 : %s\n", chunks[1].data);
+    printf("data 3 : %s\n", chunks[2].data);
+
+    /*
+    Chunk un = {"data1", "d41d8cd98f00b204e9800998ecf8427e", 1, 1}; //oui
+    Chunk deux = {"data2", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // oui
+	Chunk trois = {"data3", "d41d8cd98f00b204e9800998ecf8427e", 1, 2}; // oui
+    Chunk quatre = {"data4", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // non
+	Chunk cinq = {"data5", "d41d8cd98f00b204e9800998ecf8427e", 2, 2}; // oui
+    Chunk six = {"data6", "d41d8cd98f00b204e9800998ecf8428e", 3, 1}; // oui
+
+    Chunk chunks1[5] = {un, deux, trois, cinq, six};
+	Chunk chunks2[3] = {un, six, quatre};
+
+
+    sauvegarder(chunks1, 5, nom_fichier);
+	printf("ça c'eST FAIT\n");
+	sauvegarder(chunks2, 3, nom_fichier);
 
     recup_save_content(nom_fichier, 2);
     printf("sortie\n");
-
+    */
     /*
     Chunk un = {"data1", "d41d8cd98f00b204e9800998ecf8427e", 1, 1}; //oui
     Chunk deux = {"data2", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // oui

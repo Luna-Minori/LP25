@@ -3,6 +3,7 @@
 #include <openssl/evp.h>
 #include <stdint.h>
 #include <string.h>
+#include <libgen.h>
 #include "file_handler.h"
 #include "file_modifier.h"
 #include "backup_manager.h"

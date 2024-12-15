@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "file_modifier.h"
 #include "file_handler.h"
 #include "backup_manager.h"
@@ -90,10 +91,9 @@ char *read_file(char *filename)
     }
 
     size_t total_read = 0;
-    size_t chunk_size = 1024;
     while (total_read < file_size)
     {
-        size_t bytes_to_read = (file_size - total_read < chunk_size) ? file_size - total_read : chunk_size;
+        size_t bytes_to_read = (file_size - total_read < CHUNK_SIZE) ? file_size - total_read : CHUNK_SIZE;
         size_t read_size = fread(content + total_read, 1, bytes_to_read, file);
         if (read_size != bytes_to_read)
         {
@@ -173,8 +173,9 @@ int read_savefile_in_chunks(char *filename, Chunk *chunks)
 void recup_save_content(char *nom_fichier, int version){
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-    char md5_fichier[33];
 	compute_md5_file(nom_fichier, md5, &md5_len);
+    
+	char md5_fichier[33];
     for (int i = 0; i < 16; ++i) {
         snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
     }
@@ -182,7 +183,9 @@ void recup_save_content(char *nom_fichier, int version){
     snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
     
     if (access(nom_fichier_sauvegarde, F_OK) == -1){
-        perror("Erreur: Le fichier de sauvegarde n'existe pas");
+        perror("Erreur: Le fichier de sauvegarde n'existe pas\n");
+        printf("nom du fichier de sauvegarde :%s\n", nom_fichier_sauvegarde);
+        return;
     }
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
 
@@ -201,7 +204,7 @@ void recup_save_content(char *nom_fichier, int version){
     Chunk chunks[file_size];
 
     read_savefile_in_chunks(nom_fichier_sauvegarde, chunks);
-    
+
     printf("%s\n", chunks[0].data);
     printf("passe1\n");
 
@@ -253,12 +256,12 @@ void recup_save_content(char *nom_fichier, int version){
     fclose(temp_file);
 
     // Remplacer l'ancien fichier par le fichier temporaire
-    if (remove(nom_fichier_sauvegarde) != 0) {
+    if (remove(nom_fichier) != 0) {
         perror("Erreur de suppression de l'ancien fichier");
         return;
     }
 
-    if (rename(nom_fichier_temp, nom_fichier_sauvegarde) != 0) {
+    if (rename(nom_fichier_temp, nom_fichier) != 0) {
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
