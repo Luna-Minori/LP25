@@ -31,38 +31,42 @@ int verifier_fichier_ou_dossier(char *path)
     return 1; // la racine
 }
 
-/*
-void parcourir_dossier(char *path) {
+void parcourir_dossier(char *path)
+{
     struct dirent *ent;
-    DIR *dir = opendir(dossier);
+    DIR *dir = opendir(path);
 
-    if (dir == NULL) {
+    if (dir == NULL)
+    {
         perror("Erreur lors de l'ouverture du dossier");
         return;
     }
 
-    while ((ent = readdir(dir)) != NULL) {
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) { // ignore le repertoire courant et parent
+    while ((ent = readdir(dir)) != NULL)
+    {
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+        { // ignore le repertoire courant et parent
             continue;
         }
 
         char chemin_complet[1024];
-        snprintf(chemin_complet, sizeof(chemin_complet), "%s/%s", dossier, ent->d_name);
+        snprintf(chemin_complet, sizeof(chemin_complet), "%s/%s", path, ent->d_name);
 
         struct stat st;
-        if (stat(chemin_complet, &st) == 0) {
-            if (S_ISDIR(st.st_mode)) { // cas d'un sous dossier appelle récursif
+        if (stat(chemin_complet, &st) == 0)
+        {
+            if (S_ISDIR(st.st_mode))
+            { // cas d'un sous dossier appelle récursif
                 parcourir_dossier(chemin_complet);
             }
-            else {
+            else
+            {
                 compute_chunk(chemin_complet); // fichier
             }
         }
     }
     closedir(dir);
 }
-
-*/
 
 void vider_buffer()
 {
