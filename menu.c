@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-//#include <sys/stat.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <libgen.h>
 #include "menu.h"
@@ -12,27 +12,20 @@
 
 int verifier_fichier_ou_dossier(char *path)
 {
-
-    if (path == NULL)
+    struct stat path_stat;
+    if (stat(path, &path_stat) != 0)
     {
-        return -1; // Chemin vide
+        return -1; // Chemin invalide
     }
-
-    int longueur = strlen(path);
-
-    for (int i = longueur - 1; i >= 0; --i)
+    if (S_ISDIR(path_stat.st_mode))
     {
-        if (path[i] == '/')
-        {
-            return 1; // dossier
-        }
-        if (path[i] == '.')
-        {
-            return 0; // Fichier
-        }
+        return 1; // dossier
     }
-
-    return 1; // la racine
+    if (S_ISREG(path_stat.st_mode))
+    {
+        return 0; // fichier
+    }
+    return -1; // ni fichier ni dossier
 }
 /*
 #include <sys/stat.h>
@@ -133,7 +126,6 @@ void Entry_sauvegarde(char *path_save)
         printf("-----------------------------------------------------------------\n");
         printf("- Rentrez le chemin du fichier ou dossier (/home/linux/Bureau)  -\n");
         printf("-----------------------------------------------------------------\n");
-        vider_buffer();
         fgets(path_save, 256, stdin);
         path_save[strcspn(path_save, "\n")] = '\0';
     } while (path_save[0] == '\0');
@@ -177,7 +169,8 @@ void menu()
         printf("-[3] - quitter                                                  -\n");
         printf("-----------------------------------------------------------------\n");
         printf("\nQue souhaitez vous faire ? [1/2/3]\n");
-        scanf("%c", &reponse);
+        scanf(" %c", &reponse);
+        vider_buffer(); // Clear the input buffer
         choixmenu = strtol(&reponse, NULL, 10);
         switch (choixmenu)
         {
@@ -217,8 +210,12 @@ void menu()
             char path_save[256];
             int verif;
             Entry_sauvegarde(path_save);
+            printf("je suis la\n");
             int version = get_version();
-            verif = verifier_fichier_ou_dossier(path_save);
+            printf("Version %d\n", version);
+            //verif = verifier_fichier_ou_dossier(path_save);
+            verif = 0;
+            
             switch (verif)
             {
             case -1:
@@ -228,6 +225,7 @@ void menu()
             }
             case 0:
             {
+                printf("En travaux");
                 recup_save_content(basename(path_save), path_save, version);
                 printf("Version %d restaurée\n", version);
                 break;

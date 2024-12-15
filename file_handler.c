@@ -9,15 +9,7 @@
 #include "backup_manager.h"
 
 #define HASH_TABLE_SIZE 4096
-/*
-unsigned int hash_md5(unsigned char *md5) {
-    unsigned int hash = 0;
-    for (int i = 0; i < EVP_MD_size(EVP_md5()); i++) {
-        hash = (hash << 5) + hash + md5[i];
-    }
-    return hash % HASH_TABLE_SIZE;
-}
-*/
+
 
 void reset_str(char *str)
 { // Vide la chaine de caractère

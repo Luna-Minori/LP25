@@ -146,10 +146,8 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
     {
         return 0;
     }
-    /*
-    int nombre_caractere = strlen(read_file(nom_fichier_sauvegarde));
-    int nombre_chunks = (floor(nombre_caractere/4096))+1;
-    */
+
+
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
     char ligne[4096];
     int nombre_chunks = 0;
