@@ -141,21 +141,32 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
     {
         return 0;
     }
-
-    int nombre_caractere = strlen(read_file(nom_fichier_sauvegarde));
-    int nombre_chunks = floor(nombre_caractere/4096)+1;
-
     /*
+    int nombre_caractere = strlen(read_file(nom_fichier_sauvegarde));
+    int nombre_chunks = (floor(nombre_caractere/4096))+1;
+    */
+    FILE *file = fopen(nom_fichier_sauvegarde, "rb");
+    char ligne[4096];
+    int nombre_chunks = 0;
+    
+    while (fgets(ligne, sizeof(ligne), file)) {
+        if (ligne[32] == ';') {
+            nombre_chunks++;
+        }
+    }
+    
+    fclose(file);
+
+    
     int nombre_lignes = 0;    
     while (file_content[nombre_lignes] != NULL) {
         nombre_lignes++;
     }
     
-    int nombre_chunks = (nombre_lignes - 1) / 2;
-    */
-    printf("Nombre de lignes: %d\n", nombre_caractere);
-    printf("Nombre de chunks: %d\n", nombre_chunks);
-    printf("ligne 1: %s\n", file_content[0]);
+    
+    //printf("Nombre de lignes: %d\n", nombre_caractere);
+    //printf("Nombre de chunks: %d\n", nombre_chunks);
+    //printf("ligne 1: %s\n", file_content[0]);
 
     /*
     int j = 0;
@@ -168,15 +179,16 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
 
     int k = 1;
     int pointeur = 0;
-    
-    for (int i = 0; i <= nombre_chunks; i++)
+    printf("nombre chunks ici : %d\n", nombre_chunks);
+    for (int i = 0; i < nombre_chunks; i++)
     {
         Chunk chunk;
 
         char ligne[4096] = {};
 
         if (file_content[k][32]==';') {
-            printf("passeVRAI\n");
+            //printf("passeVRAI\n");
+            
 
             strncpy(chunk.MD5, file_content[k], 32);
             char temp_index[16] = {};
@@ -197,19 +209,23 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
                 h++;
             }
             chunk.version = atoi(temp_version);
+            
         }
         k++;
         
-        while (pointeur <= 4096 && file_content[k][32] != ';') {
-            
-            while (pointeur < strlen(file_content[k]) && pointeur <= 4096) {
+        while (k < nombre_lignes && file_content[k][32] != ';') {
+            //printf("passeFAUX\n");
+            pointeur = 0;
+            while (pointeur < strlen(file_content[k])) {
                 strncat(ligne, &file_content[k][pointeur], 1);
                 pointeur++;
             }
+            //printf("passeFAUX2\n");
             k++;
             //printf("%d ", k);
         }
-        printf("pointeur : %d \n", pointeur);
+        //printf("passeFAUX3\n");
+        //printf("pointeur : %d \n", pointeur);
         if (pointeur > 4096) {
             pointeur = 0;
             k--;
@@ -299,18 +315,26 @@ void recup_save_content(char *nom_fichier, char *path, int version){
     printf("passe4\n");
 
     i = 0;
+    printf("chunkdata : %d", chunks[3].index);
     while (chunks[i].data != NULL) {
-        
+        printf("indexverproch : %d\n",index_versions_proches[(chunks[i].index-1)]);
         if (index_versions_proches[(chunks[i].index-1)] == -1){
             index_versions_proches[(chunks[i].index-1)] = i;
         }
 
         else {
-            if (chunks[index_versions_proches[(chunks[i].index)-1]].version < chunks[i].version && chunks[index_versions_proches[(chunks[i].index)-1]].version <= version) {
+            for (int k = 0; k < index_max; k++) {
+                printf("meilleirs index : %d \n",chunks[index_versions_proches[k]].index);
+            }
+            if (chunks[index_versions_proches[(chunks[i].index)-1]].version < chunks[i].version && chunks[i].version <= version) {
                 index_versions_proches[(chunks[i].index)-1] = i;
             }
         }
         i++;
+    }
+ 
+    for (int k = 0; k < index_max; k++) {
+        printf("meilleirs index : %d \n",chunks[index_versions_proches[k]].index);
     }
 
     for (int k = 0; k < index_max; k++) {

@@ -157,16 +157,16 @@ int main() {
 int main()
 {
     
-    Chunk chunks[100];
+    //Chunk chunks[100];
     
     char *nom_fichier = "fichier_test.txt";
     char *path = "./fichier_test.txt";
     
     //int nombre_chunk = compute_chunk(nom_fichier, path, chunks);
 
-    int nombre_chunk = read_savefile_in_chunks(nom_fichier, path, chunks);
+    //int nombre_chunk = read_savefile_in_chunks(nom_fichier, path, chunks);
 
-    printf("nombre de chunks: %d\n", nombre_chunk);
+    //printf("nombre de chunks: %d\n", nombre_chunk);
 
     /*
     int i = 0;
@@ -184,7 +184,7 @@ int main()
     
     //sauvegarder(chunks, nombre_chunk, nom_fichier, path);
     
-    //recup_save_content(nom_fichier, 1);
+    recup_save_content(nom_fichier, path, 2);
 
 
     /*

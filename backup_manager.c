@@ -238,6 +238,7 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
         }
         else
         {
+            printf("versiiion : %d",chunks[i].version);
             if (!existe_deja_version(chunks[i].version, chunks[i].index, file)) // Si la version n'existe pas, on l'ajoute
             {
                 fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version, chunks[i].data);
