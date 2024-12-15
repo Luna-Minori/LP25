@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <openssl/evp.h>
@@ -120,60 +121,123 @@ char *read_file(char *filename)
 }
 
 
-int read_savefile_in_chunks(char *filename, Chunk *chunks)
+int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
 {
     printf("%s\n", filename);
-    char **file_content = read_file_lines(filename);
+
+    unsigned char md5[EVP_MAX_MD_SIZE];
+    unsigned int md5_len;
+	compute_md5_file(path, md5, &md5_len);
+    
+	char md5_fichier[33];
+    for (int i = 0; i < 16; ++i) {
+        snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
+    }
+    char nom_fichier_sauvegarde[50];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
+    
+    char **file_content = read_file_lines(nom_fichier_sauvegarde);
     if (file_content == NULL)
     {
         return 0;
     }
 
-    int nombre_lignes = 0;
+    int nombre_caractere = strlen(read_file(nom_fichier_sauvegarde));
+    int nombre_chunks = floor(nombre_caractere/4096)+1;
+
+    /*
+    int nombre_lignes = 0;    
     while (file_content[nombre_lignes] != NULL) {
         nombre_lignes++;
     }
-
+    
     int nombre_chunks = (nombre_lignes - 1) / 2;
+    */
+    printf("Nombre de lignes: %d\n", nombre_caractere);
+    printf("Nombre de chunks: %d\n", nombre_chunks);
+    printf("ligne 1: %s\n", file_content[0]);
 
-    for (int i = 0; i < nombre_chunks; i++)
+    /*
+    int j = 0;
+    while (file_content[j] != NULL) {
+        j++;
+    }
+
+    int taille_content = j;
+    */
+
+    int k = 1;
+    int pointeur = 0;
+    
+    for (int i = 0; i <= nombre_chunks; i++)
     {
         Chunk chunk;
+
         char ligne[4096] = {};
+
+        if (file_content[k][32]==';') {
+            printf("passeVRAI\n");
+
+            strncpy(chunk.MD5, file_content[k], 32);
+            char temp_index[16] = {};
+            int h = 33;
+            while (file_content[k][h] != ';')
+            {
+                char temp[2] = {file_content[k][h], '\0'};
+                strncat(temp_index, temp, 1);
+                h++;
+            }
+            chunk.index = atoi(temp_index);
+            char temp_version[16] = {};
+            h++;
+            while (file_content[k][h] != '\0')
+            {
+                char temp[2] = {file_content[k][h], '\0'};
+                strncat(temp_version, temp, 1);
+                h++;
+            }
+            chunk.version = atoi(temp_version);
+        }
+        k++;
+        
+        while (pointeur <= 4096 && file_content[k][32] != ';') {
+            
+            while (pointeur < strlen(file_content[k]) && pointeur <= 4096) {
+                strncat(ligne, &file_content[k][pointeur], 1);
+                pointeur++;
+            }
+            k++;
+            //printf("%d ", k);
+        }
+        printf("pointeur : %d \n", pointeur);
+        if (pointeur > 4096) {
+            pointeur = 0;
+            k--;
+        }
+        
+        chunk.data = strdup(ligne);
+        chunks[i] = chunk;
+        printf("md5 numero %d: %s\n", i, chunk.MD5);
+        printf("index numero %d: %d\n", i, chunk.index);
+        printf("version numero %d: %d\n", i, chunk.version);
+        printf("data numero %d: %s\n", i, chunk.data);
+
+
+        /*
         strncpy(ligne, file_content[i * 2 + 1], sizeof(ligne) - 1); // Dereference file_content
         chunk.data = strdup(file_content[i * 2 + 2]); // Copy the data
-
-        strncpy(chunk.MD5, ligne, 32);
-        char temp_index[16] = {};
-        int k = 33;
-        while (ligne[k] != ';')
-        {
-            char temp[2] = {ligne[k], '\0'};
-            strncat(temp_index, temp, 1);
-            k++;
-        }
-        chunk.index = atoi(temp_index);
-        char temp_version[16] = {};
-        k++;
-        while (ligne[k] != '\0')
-        {
-            char temp[2] = {ligne[k], '\0'};
-            strncat(temp_version, temp, 1);
-            k++;
-        }
-        chunk.version = atoi(temp_version);
-
-        chunks[i] = chunk;
+        */
+        printf("passe\n");
     }
     free(file_content);
-    return 1;
+    return nombre_chunks;
 }
 
 
-void recup_save_content(char *nom_fichier, int version){
+void recup_save_content(char *nom_fichier, char *path, int version){
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5_file(nom_fichier, md5, &md5_len);
+	compute_md5_file(path, md5, &md5_len);
     
 	char md5_fichier[33];
     for (int i = 0; i < 16; ++i) {
@@ -203,7 +267,7 @@ void recup_save_content(char *nom_fichier, int version){
 
     Chunk chunks[file_size];
 
-    read_savefile_in_chunks(nom_fichier_sauvegarde, chunks);
+    read_savefile_in_chunks(nom_fichier_sauvegarde, path, chunks);
 
     printf("%s\n", chunks[0].data);
     printf("passe1\n");

@@ -108,11 +108,58 @@ int existe_deja_version(int version, int index, FILE *file)
     return 0; // Pas trouvé
 }
 
-void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
+int existe_deja_md5(char *md5, int version, int index, FILE *file)
+{
+    char ligne[4096];
+    int version_ligne=-1;
+    int index_ligne=-1;
+    rewind(file); // Rewind pour lire depuis le début du fichier
+    fgets(ligne, sizeof(ligne), file);  
+    while (fgets(ligne, sizeof(ligne), file))
+    {
+        if (ligne[0] != '\n' || strlen(ligne) > 33) {
+            
+            if (ligne[32]==';'){
+                char temp_version[16]={};
+                char temp_index[16]={};
+                int i = 33;
+                while (ligne[i] != ';'){ // cherche l'index sur la ligne
+                    char temp[2] = {ligne[i]};
+                    strncat(temp_index, temp, 1);
+                    i++;
+                }
+                index_ligne = atoi(temp_index);
+
+                if (index_ligne == index){
+                    
+                
+                    i++;
+                    while (ligne[i] != '\0'){// cherche la versions sur la ligne
+                        char temp[2] = {ligne[i]};
+                        strncat(temp_version, temp, 1);
+                        i++;
+                    }
+                    version_ligne = atoi(temp_version);
+                    if (version == version_ligne)
+                    {
+                        if (strncmp(ligne, md5, 32) == 0)
+                        {
+                            return 1; // Trouvé
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0; // Pas trouvé
+}
+
+
+void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *path)
 {
 	unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5_file(nom_fichier, md5, &md5_len);
+	compute_md5_file(path, md5, &md5_len);
 
 	char md5_fichier[33];
     for (int i = 0; i < 16; ++i) {
@@ -182,6 +229,11 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier)
             {
                 printf("la version %d n'existe pas\n", chunks[i].version);
                 fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version, chunks[i].data);
+            }
+            else {
+                if (existe_deja_md5(chunks[i].MD5, chunks[i].version, chunks[i].index, file)==0){
+                    fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version+1, chunks[i].data);
+                }
             }
             
         }

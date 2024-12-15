@@ -14,7 +14,7 @@ typedef struct Chunk{
 int element_dans_liste(int element, int *liste, int taille);
 char **read_file_lines(const char *filename);
 char *read_file(char *filename);
-int read_savefile_in_chunks(char *filename, Chunk *chunks);
-void recup_save_content(char *nom_fichier, int version);
+int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks);
+void recup_save_content(char *nom_fichier, char *path, int version);
 
 #endif // FILE_MODIFIER_H

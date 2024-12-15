@@ -18,25 +18,36 @@ unsigned int hash_md5(unsigned char *md5) {
     return hash % HASH_TABLE_SIZE;
 }
 */
+
+void reset_str(char *str){  // Vide la chaine de caractère
+  while(*str != '\0'){
+    *str = '\0';
+    ++str;
+  }
+}
+
 void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md5_len) { // genere un md5
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
-        perror("Erreur d'ouverture du fichier");
+    EVP_MD_CTX *context = EVP_MD_CTX_new();
+    if (!context) {
+        fprintf(stderr, "Erreur : impossible d'initialiser EVP_MD_CTX\n");
         exit(1);
     }
 
-    EVP_MD_CTX *context = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(context, EVP_md5(), NULL);
-
-    unsigned char buffer[1024];
-    size_t bytes;
-    while ((bytes = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-        EVP_DigestUpdate(context, buffer, bytes);
+    if (EVP_DigestInit_ex(context, EVP_md5(), NULL) != 1) {
+        fprintf(stderr, "Erreur : EVP_DigestInit_ex a échoué\n");
+        EVP_MD_CTX_free(context);
+        exit(1);
     }
 
-    EVP_DigestFinal_ex(context, md5, md5_len);
+    EVP_DigestUpdate(context, filename, strlen(filename));
+
+    if (EVP_DigestFinal_ex(context, md5, md5_len) != 1) {
+        fprintf(stderr, "Erreur : EVP_DigestFinal_ex a échoué\n");
+        EVP_MD_CTX_free(context);
+        exit(1);
+    }
+
     EVP_MD_CTX_free(context);
-    fclose(file);
 }
 
 void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
@@ -77,29 +88,58 @@ void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
 }
 
 
-void compute_chunk(const char *path, Chunk *chunks) { // découpe un fichier en chunk
+int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
+{
     FILE *fichier_entree = fopen(nom_fichier, "rb");
-    if (fichier_entree == NULL) {
+    if (fichier_entree == NULL)
+    {
         perror("Erreur lors de l'ouverture du fichier d'entrée");
-        return;
+        return-1;
     }
 
-    char chunk[HASH_TABLE_SIZE];
-    size_t bytes_lus;
+    char chunk_data[10][4096] = {0};
+    int index_data = 0;
     int chunk_index = 0;
+    char *contenu = read_file(nom_fichier);
+    if (contenu == NULL)
+    {
+        perror("Erreur lors de la lecture du fichier");
+        fclose(fichier_entree);
+        return -1;
+    }
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5_file(nom_fichier, md5, &md5_len);
+    compute_md5_file(path, md5, &md5_len);
 
-    while ((bytes_lus = fread(chunk, 1, HASH_TABLE_SIZE, fichier_entree)) > 0) { // découpe le fichier en chunk
-        chunks->data = chunk;
-        chunks->index = chunk_index;
-        chunks->version = 1;
-        compute_md5_chunk(chunk, strlen(chunk), chunks->MD5);
+    while (contenu[chunk_index] != '\0')
+    {
+        if (chunk_index % 4096 == 0 && chunk_index != 0)
+        {
+            chunks[index_data].index = index_data + 1;
+            chunks[index_data].version = 1;
+            chunks[index_data].data = strdup(chunk_data[index_data]);
+            compute_md5_chunk(chunk_data[index_data], strlen(chunk_data[index_data]), chunks[index_data].MD5);
+            memset(chunk_data[index_data], 0, sizeof(chunk_data[index_data]));
+            index_data++;
+        }
+        strncat(chunk_data[index_data], &contenu[chunk_index], 1);
         chunk_index++;
     }
 
+    if (chunk_index % 4096 != 0)
+    {
+        chunks[index_data].index = index_data + 1;
+        chunks[index_data].version = 1;
+        chunks[index_data].data = strdup(chunk_data[index_data]);
+        compute_md5_chunk(chunk_data[index_data], strlen(chunk_data[index_data]), chunks[index_data].MD5);
+    }
+
     fclose(fichier_entree);
-    printf("Découpage terminé. %d chunks lus.\n", chunk_index);
+    free(contenu);
+    printf("Découpage terminé. %d chunks lus.\n", index_data + 1);
+
+    return index_data + 1;
 }
+
+    
 

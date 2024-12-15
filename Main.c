@@ -156,16 +156,51 @@ int main() {
 
 int main()
 {
+    
     Chunk chunks[100];
     
     char *nom_fichier = "fichier_test.txt";
+    char *path = "./fichier_test.txt";
+    
+    //int nombre_chunk = compute_chunk(nom_fichier, path, chunks);
 
-    compute_chunk(nom_fichier, chunks);
-    printf("data 1 : %s\n", chunks[0].data);
-    printf("data 2 : %s\n", chunks[1].data);
-    printf("data 3 : %s\n", chunks[2].data);
+    int nombre_chunk = read_savefile_in_chunks(nom_fichier, path, chunks);
+
+    printf("nombre de chunks: %d\n", nombre_chunk);
 
     /*
+    int i = 0;
+    while (chunks[i].data != NULL) {
+        printf("chunk index: %d\n", i);
+        printf("data: %s\n", chunks[i].data);
+        printf("md5: %s\n", chunks[i].MD5);
+        printf("index: %d\n", chunks[i].index);
+        printf("version: %d\n", chunks[i].version);
+        i++;
+    }
+    */
+
+    
+    
+    //sauvegarder(chunks, nombre_chunk, nom_fichier, path);
+    
+    //recup_save_content(nom_fichier, 1);
+
+
+    /*
+
+    printf("nombre de chunks: %d\n", nombre_chunk);
+    printf("data: %s\n", chunks[0].data);
+    printf("data: %s\n", chunks[1].data);
+    printf("data: %s\n", chunks[2].data);
+
+    FILE *file = fopen("e6889244e245c304fd9ab8fad96f4a90_sauvegarde.txt", "rb");
+    char *md5 ="cd8c1d3b592a9520a56aeb9663987aca";
+
+    printf("index: %d\n",existe_deja_index(3,file));  
+    printf("version: %d\n",existe_deja_version(1,3,file));  
+    printf("md5: %d\n",existe_deja_md5(md5,1,3,file));   
+
     Chunk un = {"data1", "d41d8cd98f00b204e9800998ecf8427e", 1, 1}; //oui
     Chunk deux = {"data2", "d41d8cd98f00b204e9800998ecf8428e", 2, 1}; // oui
 	Chunk trois = {"data3", "d41d8cd98f00b204e9800998ecf8427e", 1, 2}; // oui
