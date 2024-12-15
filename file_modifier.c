@@ -12,22 +12,25 @@
 #include "file_handler.h"
 #include "backup_manager.h"
 
-
 #define CHUNK_SIZE 4096
 
-int element_dans_liste(int element, int *liste, int taille) {
-    for (int i = 0; i < taille; i++) {
-        if (liste[i] == element) {
+int element_dans_liste(int element, int *liste, int taille)
+{
+    for (int i = 0; i < taille; i++)
+    {
+        if (liste[i] == element)
+        {
             return 1;
         }
     }
     return 0;
 }
 
-
-char **read_file_lines(const char *filename) {
+char **read_file_lines(const char *filename)
+{
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
+    if (file == NULL)
+    {
         perror("Erreur: Impossible d'ouvrir le fichier");
         return NULL;
     }
@@ -36,15 +39,18 @@ char **read_file_lines(const char *filename) {
     char buffer[1024];
     int num_lines = 0;
 
-    while (fgets(buffer, sizeof(buffer), file)) {
+    while (fgets(buffer, sizeof(buffer), file))
+    {
         lines = realloc(lines, (num_lines + 1) * sizeof(char *));
-        if (lines == NULL) {
+        if (lines == NULL)
+        {
             perror("Erreur: Allocation mémoire échouée");
             fclose(file);
             return NULL;
         }
         lines[num_lines] = strdup(buffer);
-        if (lines[num_lines] == NULL) {
+        if (lines[num_lines] == NULL)
+        {
             perror("Erreur: Allocation mémoire échouée");
             fclose(file);
             return NULL;
@@ -53,7 +59,8 @@ char **read_file_lines(const char *filename) {
     }
 
     lines = realloc(lines, (num_lines + 1) * sizeof(char *));
-    if (lines == NULL) {
+    if (lines == NULL)
+    {
         perror("Erreur: Allocation mémoire échouée");
         fclose(file);
         return NULL;
@@ -120,22 +127,20 @@ char *read_file(char *filename)
     return content;
 }
 
-
 int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
 {
-    printf("%s\n", filename);
-
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5_file(path, md5, &md5_len);
-    
-	char md5_fichier[33];
-    for (int i = 0; i < 16; ++i) {
-        snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
+    compute_md5_file(path, md5, &md5_len);
+
+    char md5_fichier[33];
+    for (int i = 0; i < 16; ++i)
+    {
+        snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
     char nom_fichier_sauvegarde[50];
     snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
-    
+
     char **file_content = read_file_lines(nom_fichier_sauvegarde);
     if (file_content == NULL)
     {
@@ -148,47 +153,33 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
     char ligne[4096];
     int nombre_chunks = 0;
-    
-    while (fgets(ligne, sizeof(ligne), file)) {
-        if (ligne[32] == ';') {
+
+    while (fgets(ligne, sizeof(ligne), file))
+    {
+        if (ligne[32] == ';')
+        {
             nombre_chunks++;
         }
     }
-    
+
     fclose(file);
 
-    
-    int nombre_lignes = 0;    
-    while (file_content[nombre_lignes] != NULL) {
+    int nombre_lignes = 0;
+    while (file_content[nombre_lignes] != NULL)
+    {
         nombre_lignes++;
     }
-    
-    
-    //printf("Nombre de lignes: %d\n", nombre_caractere);
-    //printf("Nombre de chunks: %d\n", nombre_chunks);
-    //printf("ligne 1: %s\n", file_content[0]);
-
-    /*
-    int j = 0;
-    while (file_content[j] != NULL) {
-        j++;
-    }
-
-    int taille_content = j;
-    */
 
     int k = 1;
     int pointeur = 0;
-    printf("nombre chunks ici : %d\n", nombre_chunks);
     for (int i = 0; i < nombre_chunks; i++)
     {
         Chunk chunk;
 
         char ligne[4096] = {};
 
-        if (file_content[k][32]==';') {
-            //printf("passeVRAI\n");
-            
+        if (file_content[k][32] == ';')
+        {
 
             strncpy(chunk.MD5, file_content[k], 32);
             char temp_index[16] = {};
@@ -209,60 +200,48 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
                 h++;
             }
             chunk.version = atoi(temp_version);
-            
         }
         k++;
-        
-        while (k < nombre_lignes && file_content[k][32] != ';') {
-            //printf("passeFAUX\n");
+
+        while (k < nombre_lignes && file_content[k][32] != ';')
+        {
             pointeur = 0;
-            while (pointeur < strlen(file_content[k])) {
+            while (pointeur < strlen(file_content[k]))
+            {
                 strncat(ligne, &file_content[k][pointeur], 1);
                 pointeur++;
             }
-            //printf("passeFAUX2\n");
             k++;
-            //printf("%d ", k);
         }
-        //printf("passeFAUX3\n");
-        //printf("pointeur : %d \n", pointeur);
-        if (pointeur > 4096) {
+        if (pointeur > 4096)
+        {
             pointeur = 0;
             k--;
         }
-        
+
         chunk.data = strdup(ligne);
         chunks[i] = chunk;
-        printf("md5 numero %d: %s\n", i, chunk.MD5);
-        printf("index numero %d: %d\n", i, chunk.index);
-        printf("version numero %d: %d\n", i, chunk.version);
-        printf("data numero %d: %s\n", i, chunk.data);
-
-
-        /*
-        strncpy(ligne, file_content[i * 2 + 1], sizeof(ligne) - 1); // Dereference file_content
-        chunk.data = strdup(file_content[i * 2 + 2]); // Copy the data
-        */
-        printf("passe\n");
     }
     free(file_content);
     return nombre_chunks;
 }
 
-
-void recup_save_content(char *nom_fichier, char *path, int version){
+void recup_save_content(char *nom_fichier, char *path, int version)
+{
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-	compute_md5_file(path, md5, &md5_len);
-    
-	char md5_fichier[33];
-    for (int i = 0; i < 16; ++i) {
-        snprintf(&md5_fichier[i*2], 3, "%02x", md5[i]);
+    compute_md5_file(path, md5, &md5_len);
+
+    char md5_fichier[33];
+    for (int i = 0; i < 16; ++i)
+    {
+        snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
     char nom_fichier_sauvegarde[50];
     snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
-    
-    if (access(nom_fichier_sauvegarde, F_OK) == -1){
+
+    if (access(nom_fichier_sauvegarde, F_OK) == -1)
+    {
         perror("Erreur: Le fichier de sauvegarde n'existe pas\n");
         printf("nom du fichier de sauvegarde :%s\n", nom_fichier_sauvegarde);
         return;
@@ -271,87 +250,78 @@ void recup_save_content(char *nom_fichier, char *path, int version){
 
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
-    if (file_size == -1L) {
+    if (file_size == -1L)
+    {
         perror("Erreur: Taille du fichier de sauvegarde inconnue");
         fclose(file);
         return;
     }
     rewind(file);
-    printf("nom du fichier de sauvegarde :%s\n", nom_fichier_sauvegarde);
-    printf("taille du fichier de sauvegarde : %ld\n", file_size);
     fclose(file);
 
     Chunk chunks[file_size];
-
     read_savefile_in_chunks(nom_fichier_sauvegarde, path, chunks);
-
-    printf("%s\n", chunks[0].data);
-    printf("passe1\n");
-
     char nom_fichier_temp[80];
     snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier_sauvegarde);
 
     FILE *temp_file = fopen(nom_fichier_temp, "wb");
-    if (temp_file == NULL) {
+    if (temp_file == NULL)
+    {
         perror("Erreur: Impossible de créer le fichier temporaire");
         return;
     }
-    printf("passe2\n");
 
     int i = 0;
     int index_max = 0;
-    while (chunks[i].data != NULL) {      
-        if (chunks[i].index > index_max) {
+    while (chunks[i].data != NULL)
+    {
+        if (chunks[i].index > index_max)
+        {
             index_max = chunks[i].index;
         }
         i++;
     }
-    printf("passe3\n");
-    int index_versions_proches[index_max+1];
-    printf("passe35\n");
-    for (int j = 0; j < index_max; j++) {
+
+    int index_versions_proches[index_max + 1];
+    for (int j = 0; j < index_max; j++)
+    {
         index_versions_proches[j] = -1;
     }
-    printf("passe4\n");
 
     i = 0;
-    printf("chunkdata : %d", chunks[3].index);
-    while (chunks[i].data != NULL) {
-        printf("indexverproch : %d\n",index_versions_proches[(chunks[i].index-1)]);
-        if (index_versions_proches[(chunks[i].index-1)] == -1){
-            index_versions_proches[(chunks[i].index-1)] = i;
+    while (chunks[i].data != NULL)
+    {
+        if (index_versions_proches[(chunks[i].index - 1)] == -1)
+        {
+            index_versions_proches[(chunks[i].index - 1)] = i;
         }
 
-        else {
-            for (int k = 0; k < index_max; k++) {
-                printf("meilleirs index : %d \n",chunks[index_versions_proches[k]].index);
-            }
-            if (chunks[index_versions_proches[(chunks[i].index)-1]].version < chunks[i].version && chunks[i].version <= version) {
-                index_versions_proches[(chunks[i].index)-1] = i;
+        else
+        {
+            if (chunks[index_versions_proches[(chunks[i].index) - 1]].version < chunks[i].version && chunks[i].version <= version)
+            {
+                index_versions_proches[(chunks[i].index) - 1] = i;
             }
         }
         i++;
     }
- 
-    for (int k = 0; k < index_max; k++) {
-        printf("meilleirs index : %d \n",chunks[index_versions_proches[k]].index);
-    }
 
-    for (int k = 0; k < index_max; k++) {
-        fprintf(temp_file, "%s",chunks[index_versions_proches[k]].data);
+    for (int k = 0; k < index_max; k++)
+    {
+        fprintf(temp_file, "%s", chunks[index_versions_proches[k]].data);
     }
 
     fclose(temp_file);
 
     // Remplacer l'ancien fichier par le fichier temporaire
-    if (remove(nom_fichier) != 0) {
+    if (remove(nom_fichier) != 0)
+    {
         perror("Erreur de suppression de l'ancien fichier");
         return;
     }
-
-    if (rename(nom_fichier_temp, nom_fichier) != 0) {
+    if (rename(nom_fichier_temp, nom_fichier) != 0)
+    {
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
-
 }
