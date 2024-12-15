@@ -3,7 +3,7 @@ CFLAGS = -Wall -g
 LDFLAGS = -lssl -lcrypto
 
 # List of object files
-OBJS = backup_manager.o file_handler.o Main.o file_modifier.o
+OBJS = backup_manager.o file_handler.o Main.o file_modifier.o menu.o
 
 # Target to build the executable
 Main: $(OBJS)
@@ -19,6 +19,10 @@ backup_manager.o: backup_manager.c backup_manager.h
 
 file_handler.o: file_handler.c file_handler.h
 	$(CC) $(CFLAGS) -c file_handler.c
+
+menu.o: menu.c menu.h
+	$(CC) $(CFLAGS) -c menu.c
+
 
 Main.o: Main.c Main.h
 	$(CC) $(CFLAGS) -c Main.c

@@ -6,9 +6,10 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <libgen.h>
+#include "file_modifier.h"
 #include "file_handler.h"
 #include "backup_manager.h"
-#include "file_modifier.h"
+#include "menu.h"
 
 
 
@@ -156,11 +157,12 @@ int main() {
 
 int main()
 {
+    menu();
     
     //Chunk chunks[100];
     
-    char *nom_fichier = "fichier_test.txt";
-    char *path = "./fichier_test.txt";
+    //char *nom_fichier = "fichier_test.txt";
+    //char *path = "./fichier_test.txt";
     
     //int nombre_chunk = compute_chunk(nom_fichier, path, chunks);
 
@@ -184,7 +186,7 @@ int main()
     
     //sauvegarder(chunks, nombre_chunk, nom_fichier, path);
     
-    recup_save_content(nom_fichier, path, 2);
+    //recup_save_content(nom_fichier, path, 2);
 
 
     /*

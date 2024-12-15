@@ -10,7 +10,7 @@ typedef struct Chunk{
     int index;
     int version;
 } Chunk;
- 
+
 int element_dans_liste(int element, int *liste, int taille);
 char **read_file_lines(const char *filename);
 char *read_file(char *filename);

@@ -5,6 +5,7 @@
 #include "file_modifier.h"
 
 
+
 void copier_fichier(FILE *source, FILE *dest, int ligne_debut);
 int existe_deja_index(int index, FILE *file);
 int existe_deja_version(int version, int index, FILE *file);

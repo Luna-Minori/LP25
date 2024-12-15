@@ -64,6 +64,7 @@
     "backup_manager.h": "c",
     "unistd.h": "c",
     "file_modifier.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "file_handler.h": "c"
   }
 }
