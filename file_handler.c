@@ -76,7 +76,7 @@ void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
 }
 
 
-void compute_chunk(const char *nom_fichier, Chunk *chunks) { // découpe un fichier en chunk
+void compute_chunk(const char *path, Chunk *chunks) { // découpe un fichier en chunk
     FILE *fichier_entree = fopen(nom_fichier, "rb");
     if (fichier_entree == NULL) {
         perror("Erreur lors de l'ouverture du fichier d'entrée");
