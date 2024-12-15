@@ -19,21 +19,26 @@ unsigned int hash_md5(unsigned char *md5) {
 }
 */
 
-void reset_str(char *str){  // Vide la chaine de caractère
-  while(*str != '\0'){
-    *str = '\0';
-    ++str;
-  }
+void reset_str(char *str)
+{ // Vide la chaine de caractère
+    while (*str != '\0')
+    {
+        *str = '\0';
+        ++str;
+    }
 }
 
-void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md5_len) { // genere un md5
+void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md5_len)
+{ // genere un md5
     EVP_MD_CTX *context = EVP_MD_CTX_new();
-    if (!context) {
+    if (!context)
+    {
         fprintf(stderr, "Erreur : impossible d'initialiser EVP_MD_CTX\n");
         exit(1);
     }
 
-    if (EVP_DigestInit_ex(context, EVP_md5(), NULL) != 1) {
+    if (EVP_DigestInit_ex(context, EVP_md5(), NULL) != 1)
+    {
         fprintf(stderr, "Erreur : EVP_DigestInit_ex a échoué\n");
         EVP_MD_CTX_free(context);
         exit(1);
@@ -41,7 +46,8 @@ void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md
 
     EVP_DigestUpdate(context, filename, strlen(filename));
 
-    if (EVP_DigestFinal_ex(context, md5, md5_len) != 1) {
+    if (EVP_DigestFinal_ex(context, md5, md5_len) != 1)
+    {
         fprintf(stderr, "Erreur : EVP_DigestFinal_ex a échoué\n");
         EVP_MD_CTX_free(context);
         exit(1);
@@ -50,30 +56,35 @@ void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md
     EVP_MD_CTX_free(context);
 }
 
-void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
+void compute_md5_chunk(char *data, size_t taille, char *md5_string)
+{
     EVP_MD_CTX *ctx;
     unsigned char md5_digest[EVP_MAX_MD_SIZE];
     unsigned int md5_length;
 
     ctx = EVP_MD_CTX_new();
-    if (!ctx) {
+    if (!ctx)
+    {
         fprintf(stderr, "Erreur : impossible d'initialiser EVP_MD_CTX\n");
         return;
     }
 
-    if (EVP_DigestInit_ex(ctx, EVP_md5(), NULL) != 1) {
+    if (EVP_DigestInit_ex(ctx, EVP_md5(), NULL) != 1)
+    {
         fprintf(stderr, "Erreur : EVP_DigestInit_ex a échoué\n");
         EVP_MD_CTX_free(ctx);
         return;
     }
 
-    if (EVP_DigestUpdate(ctx, data, taille) != 1) {
+    if (EVP_DigestUpdate(ctx, data, taille) != 1)
+    {
         fprintf(stderr, "Erreur : EVP_DigestUpdate a échoué\n");
         EVP_MD_CTX_free(ctx);
         return;
     }
 
-    if (EVP_DigestFinal_ex(ctx, md5_digest, &md5_length) != 1) {
+    if (EVP_DigestFinal_ex(ctx, md5_digest, &md5_length) != 1)
+    {
         fprintf(stderr, "Erreur : EVP_DigestFinal_ex a échoué\n");
         EVP_MD_CTX_free(ctx);
         return;
@@ -81,12 +92,12 @@ void compute_md5_chunk(char *data, size_t taille, char *md5_string) {
 
     EVP_MD_CTX_free(ctx);
 
-    for (unsigned int i = 0; i < md5_length; i++) {
+    for (unsigned int i = 0; i < md5_length; i++)
+    {
         sprintf(&md5_string[i * 2], "%02x", md5_digest[i]);
     }
     md5_string[md5_length * 2] = '\0';
 }
-
 
 int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
 {
@@ -94,7 +105,7 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
     if (fichier_entree == NULL)
     {
         perror("Erreur lors de l'ouverture du fichier d'entrée");
-        return-1;
+        return -1;
     }
 
     char chunk_data[10][4096] = {0};
@@ -136,10 +147,5 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
 
     fclose(fichier_entree);
     free(contenu);
-    printf("Découpage terminé. %d chunks lus.\n", index_data + 1);
-
     return index_data + 1;
 }
-
-    
-
