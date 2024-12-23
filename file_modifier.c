@@ -138,8 +138,8 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
     {
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
-    char nom_fichier_sauvegarde[50];
-    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
+    char nom_fichier_sauvegarde[55];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "./Save/%s_sauvegarde.txt", md5_fichier);
 
     char **file_content = read_file_lines(nom_fichier_sauvegarde);
     if (file_content == NULL)
@@ -235,8 +235,8 @@ void recup_save_content(char *nom_fichier, char *path, int version)
     {
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
-    char nom_fichier_sauvegarde[50];
-    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
+    char nom_fichier_sauvegarde[55];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "./Save/%s_sauvegarde.txt", md5_fichier);
 
     if (access(nom_fichier_sauvegarde, F_OK) == -1)
     {
@@ -259,8 +259,8 @@ void recup_save_content(char *nom_fichier, char *path, int version)
 
     Chunk chunks[file_size];
     read_savefile_in_chunks(nom_fichier_sauvegarde, path, chunks);
-    char nom_fichier_temp[80];
-    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier_sauvegarde);
+    char nom_fichier_temp[85];
+    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "./Save/%s_temp.txt", nom_fichier_sauvegarde);
 
     FILE *temp_file = fopen(nom_fichier_temp, "wb");
     if (temp_file == NULL)
