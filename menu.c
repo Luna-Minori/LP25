@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <libgen.h>
 #include "menu.h"
 #include "file_modifier.h"
@@ -27,72 +28,6 @@ int verifier_fichier_ou_dossier(char *path)
     }
     return -1; // ni fichier ni dossier
 }
-/*
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-void creer_dossier(const char *chemin_dossier)
-{
-    if (mkdir(chemin_dossier) == 0) // linux mkdir(chemin_dossier, 755) pour les permissons
-    {
-        printf("Création du dossier : %s\n", chemin_dossier);
-    }
-    else
-    {
-        perror("Erreur lors de la création du dossier");
-    }
-}
-
-void parcourir_dossier(const char *dossier, const char *dossier_save)
-{
-    struct dirent *ent;
-    DIR *dir = opendir(dossier);
-
-    if (dir == NULL)
-    {
-        perror("Erreur lors de l'ouverture du dossier");
-        return;
-    }
-
-    while ((ent = readdir(dir)) != NULL)
-    {
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) // Ignore les entrées spéciales "." et ".."
-        {
-            continue;
-        }
-        char chemin_complet[1024];
-        snprintf(chemin_complet, sizeof(chemin_complet), "%s/%s", dossier, ent->d_name);
-
-        // Crée le chemin complet du dossier dans /Save
-        char chemin_save[1024];
-        // unsigned char md5[EVP_MAX_MD_SIZE];
-        // unsigned int md5_len;
-        // compute_md5_file(nom_fichier, md5, &md5_len);
-        // snprintf(chemin_save, sizeof(chemin_save), "%s/%s", md5, ent->d_name);
-        printf("Trouvé : %s\n", chemin_complet);
-
-        struct stat st;
-        if (stat(chemin_complet, &st) == 0 && S_ISDIR(st.st_mode))
-        {
-            creer_dossier(chemin_save);
-            parcourir_dossier(chemin_complet, chemin_save);
-        }
-    }
-    closedir(dir);
-}
-
-int main() // int argc, char *argv[]
-{
-    char *path = "C:\\Users\\Luna\\Desktop\\board_game_tournament";
-    // Définit le dossier de sauvegarde de base (/Save)
-    const char *racine_save = "./Save";
-    // Appelle la fonction pour parcourir le dossier
-    parcourir_dossier(path, racine_save);
-
-    return 0;
-}
-*/
 
 void vider_buffer()
 {
@@ -130,28 +65,7 @@ void Entry_sauvegarde(char *path_save)
         path_save[strcspn(path_save, "\n")] = '\0';
     } while (path_save[0] == '\0');
 }
-/*
-void Entry_recuperation(char *path_save)
-{
-    //int version = -1;
-    //char reponse[256];
-    Entry_sauvegarde(path_save);
-    
-    do
-    {
-        printf("\n");
-        printf("-----------------------------------------------------------------\n");
-        printf("- Rentrez le chemin du dossier ou vous voulez récupérer         -\n");
-        printf("- la sauvegarde (/home/linux/Bureau)                            -\n");
-        printf("-----------------------------------------------------------------\n");
-        fgets(path_restore, 256, stdin);
-        path_restore[strcspn(path_restore, "\n")] = '\0';
-    } while (path_restore[0] == '\0');
-    
-    
 
-}
-*/
 void menu()
 {
     printf("Bienvenue dans le menu de sauvegarde\n");
@@ -166,7 +80,8 @@ void menu()
         printf("-----------------------------------------------------------------\n");
         printf("-[1] - Sauvegarder un fichier ou un dossier                     -\n");
         printf("-[2] - Recuperer une versions d'un fichier ou d'un dossier      -\n");
-        printf("-[3] - quitter                                                  -\n");
+        printf("-[3] - test                                                     -\n");
+        printf("-[4] - quitter                                                  -\n");
         printf("-----------------------------------------------------------------\n");
         printf("\nQue souhaitez vous faire ? [1/2/3]\n");
         scanf(" %c", &reponse);
@@ -243,11 +158,16 @@ void menu()
         }
         case 3:
         {
+            parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
+            break;
+        }
+        case 4:
+        {
             break;
         }
         default:
             printf("Erreur de saisie");
         }
-    } while (choixmenu != 1 && choixmenu != 2 && choixmenu != 3);
+    } while (choixmenu != 1 && choixmenu != 2 && choixmenu != 3 && choixmenu != 4);
     
 }

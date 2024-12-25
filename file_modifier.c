@@ -7,7 +7,10 @@
 #include <stdint.h>
 #include <openssl/evp.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <libgen.h>
+#include <dirent.h>
 #include "file_modifier.h"
 #include "file_handler.h"
 #include "backup_manager.h"
@@ -322,4 +325,79 @@ void recup_save_content(char *nom_fichier, char *path, int version)
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
+}
+
+
+void creer_dossier(const char *chemin_dossier)
+{
+    if (mkdir(chemin_dossier, 0777) == 0) // linux mkdir(chemin_dossier, 0755) pour les permissons
+    {
+        printf("Création du dossier : %s\n", chemin_dossier);
+    }
+    else
+    {
+        perror("Erreur lors de la création du dossier");
+    }
+}
+
+void parcourir_dossier(char *dossier, char *dossier_save)
+{
+    struct dirent *fichieroudossier;
+    DIR *dir = opendir(dossier);
+
+    if (dir == NULL)
+    {
+        perror("Erreur lors de l'ouverture du dossier");
+        return;
+    }
+
+    while ((fichieroudossier = readdir(dir)) != NULL)
+    {
+        if (strcmp(fichieroudossier->d_name, ".") == 0 || strcmp(fichieroudossier->d_name, "..") == 0) // Ignore les entrées spéciales "." et ".."
+        {
+            continue;
+        }
+        char chemin_complet[1024];
+        snprintf(chemin_complet, sizeof(chemin_complet), "%s/%s", dossier, fichieroudossier->d_name);
+
+        // Crée le chemin complet du dossier dans /Save
+        char chemin_save[1024];
+        unsigned char md5[EVP_MAX_MD_SIZE];
+        unsigned int md5_len;
+
+        struct stat st;
+        if (stat(chemin_complet, &st) == 0 && S_ISDIR(st.st_mode))
+        {
+            char chemin_save_case[1024];
+            compute_md5_case(chemin_complet, md5);
+            FILE *l = fopen("testmd5.txt", "w");
+            fprintf(l, "%s", md5);
+            fclose(l);
+            snprintf(chemin_save_case, sizeof(chemin_save), "%s/%s", dossier_save, md5);
+
+            printf("chemin save case : %s\n", chemin_save_case);
+            printf("chemin complet : %s\n", chemin_complet);
+            printf("nom du fichier : %s\n", fichieroudossier->d_name);
+            printf("md5 : %s\n", md5);
+            printf("md5_len : %d\n", md5_len);
+
+            creer_dossier(chemin_save_case);
+            parcourir_dossier(chemin_complet, chemin_save_case);
+        }
+        else{
+
+            compute_md5_file(fichieroudossier->d_name, md5, &md5_len);
+            snprintf(chemin_save, sizeof(chemin_save), "%s/%s", dossier_save, md5);
+
+            printf("chemin save : %s\n", chemin_save);
+            printf("chemin complet : %s\n", chemin_complet);
+            printf("nom du fichier : %s\n", fichieroudossier->d_name);
+            printf("md5 : %s\n", md5);
+            printf("md5_len : %d\n", md5_len);
+            Chunk chunks[100]; // faut le faire dynamiquement
+            int Nchunk = compute_chunk(fichieroudossier->d_name, chemin_complet, chunks);
+            sauvegarder(chunks, Nchunk, fichieroudossier->d_name, chemin_save);
+        }
+    }
+    closedir(dir);
 }

@@ -4,12 +4,16 @@
 #include <stdint.h>
 #include <string.h>
 #include <libgen.h>
+#include <openssl/md5.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "file_handler.h"
 #include "file_modifier.h"
 #include "backup_manager.h"
 
 #define HASH_TABLE_SIZE 4096
-
+#define MAX_PATH 1024
 
 void reset_str(char *str)
 { // Vide la chaine de caractère
@@ -140,4 +144,62 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
     fclose(fichier_entree);
     free(contenu);
     return index_data + 1;
+}
+
+void compute_md5_case(const char *dir_path, unsigned char *md5_out) {
+    DIR *dir = opendir(dir_path);
+    if (!dir) {
+        perror("Erreur lors de l'ouverture du répertoire");
+        return;
+    }
+
+    EVP_MD_CTX *md5_ctx = EVP_MD_CTX_new();
+    if (!md5_ctx) {
+        perror("Erreur lors de la création du contexte EVP");
+        closedir(dir);
+        return;
+    }
+
+    if (EVP_DigestInit_ex(md5_ctx, EVP_md5(), NULL) != 1) {
+        perror("Erreur lors de l'initialisation du contexte MD5");
+        EVP_MD_CTX_free(md5_ctx);
+        closedir(dir);
+        return;
+    }
+
+    struct dirent *entry;
+    char full_path[MAX_PATH];
+    char **file_names = malloc(sizeof(char*) * 1000);
+    int file_count = 0;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        struct stat st;
+        if (stat(full_path, &st) == 0) {
+            file_names[file_count] = strdup(entry->d_name);
+            file_count++;
+        }
+    }
+
+    qsort(file_names, file_count, sizeof(char*), (int (*)(const void*, const void*))strcmp);
+    for (int i = 0; i < file_count; i++) {
+        EVP_DigestUpdate(md5_ctx, file_names[i], strlen(file_names[i]));
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, file_names[i]);
+        struct stat st;
+        if (stat(full_path, &st) == 0 && S_ISDIR(st.st_mode)) {
+            compute_md5_case(full_path, md5_out); 
+        }
+        free(file_names[i]);
+    }
+
+    unsigned int len = EVP_MD_size(EVP_md5());
+    EVP_DigestFinal_ex(md5_ctx, md5_out, &len);
+
+    EVP_MD_CTX_free(md5_ctx);
+    closedir(dir);
+    free(file_names);
 }

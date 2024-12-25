@@ -16,5 +16,7 @@ char **read_file_lines(const char *filename);
 char *read_file(char *filename);
 int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks);
 void recup_save_content(char *nom_fichier, char *path, int version);
+void parcourir_dossier(char *dossier, char *dossier_save);
+void creer_dossier(const char *chemin_dossier);
 
 #endif // FILE_MODIFIER_H
