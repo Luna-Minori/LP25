@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include "file_handler.h"
 
+
+
 char* get_md5_of_directory_name(const char *dir_path) {
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
