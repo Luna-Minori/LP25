@@ -32,8 +32,5 @@ Main.o: Main.c Main.h
 network.o: network.c network.h
 	$(CC) $(CFLAGS) -c network.c
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) -c $< -o$@
-
 clean:
 	rm -f *.o Main Network
