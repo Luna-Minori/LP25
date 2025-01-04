@@ -3,10 +3,16 @@ CFLAGS = -Wall -g
 LDFLAGS = -lssl -lcrypto
 
 OBJS = backup_manager.o file_handler.o Main.o file_modifier.o menu.o
+NETWORK_OBJS = network.o
+
+# Cible par défaut pour compiler les deux programmes
+all: Main Network
 
 Main: $(OBJS)
 	$(CC) $(CFLAGS) -o Main $(OBJS) $(LDFLAGS)
 
+Network: $(NETWORK_OBJS)
+	$(CC) $(CFLAGS) -o Network $(NETWORK_OBJS) $(LDFLAGS)
 
 file_modifier.o: file_modifier.c file_modifier.h
 	$(CC) $(CFLAGS) -c file_modifier.c $(LDFLAGS)
@@ -20,9 +26,11 @@ file_handler.o: file_handler.c file_handler.h
 menu.o: menu.c menu.h
 	$(CC) $(CFLAGS) -c menu.c
 
-
 Main.o: Main.c Main.h
 	$(CC) $(CFLAGS) -c Main.c
 
+network.o: network.c network.h
+	$(CC) $(CFLAGS) -c network.c
+
 clean:
-	rm -f *.o Main
+	rm -f *.o Main Network

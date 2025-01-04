@@ -10,12 +10,13 @@
 #include "file_handler.h"
 #include "backup_manager.h"
 #include "menu.h"
-
+#include "network_transmission.h"
 
 
 
 int main()
 {
+    send_network("test.txt");
     menu();
     
     return 0;
