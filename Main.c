@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
     }
+
     if (argc == 1)
     {
         menu();

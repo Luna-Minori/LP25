@@ -150,7 +150,6 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks)
         return 0;
     }
 
-
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
     char ligne[4096];
     int nombre_chunks = 0;
@@ -327,7 +326,6 @@ void recup_save_content(char *nom_fichier, char *path, int version)
     }
 }
 
-
 void creer_dossier(const char *chemin_dossier)
 {
     if (mkdir(chemin_dossier, 0777) == 0) // linux mkdir(chemin_dossier, 0755) pour les permissons
@@ -369,7 +367,7 @@ void parcourir_dossier(char *dossier, char *dossier_save)
         if (stat(chemin_complet, &st) == 0 && S_ISDIR(st.st_mode))
         {
             char chemin_save_case[1024];
-            char *md5 = get_md5_of_directory_name("/home/Max/LP25/Save/");
+            char *md5 = get_md5_of_directory_name(chemin_complet);
             FILE *l = fopen("testmd5.txt", "w");
             fprintf(l, "%s", md5);
             fclose(l);
@@ -384,7 +382,8 @@ void parcourir_dossier(char *dossier, char *dossier_save)
             creer_dossier(chemin_save_case);
             parcourir_dossier(chemin_complet, chemin_save_case);
         }
-        else{
+        else
+        {
             compute_md5_file(fichieroudossier->d_name, md5, &md5_len);
             snprintf(chemin_save, sizeof(chemin_save), "%s/%s", dossier_save, md5);
 
