@@ -8,5 +8,6 @@ void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md
 int compute_chunk(char *nom_fichier,char *path , Chunk *chunks);
 void compute_md5_chunk(char *data, size_t taille, char *md5_string);
 void compute_md5_case(const char *dir_path, unsigned char *md5_out);
+char* get_md5_of_directory_name(const char *dir_path);
 
 #endif // FILE_HANDLER_H

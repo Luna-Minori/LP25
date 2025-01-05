@@ -36,11 +36,13 @@ void vider_buffer()
         ;
 }
 
-int get_version() {
+int get_version()
+{
     char reponse[256];
     int version;
 
-    do {
+    do
+    {
         printf("-----------------------------------------------------------------\n");
         printf("- Entrez la versions du fichier que vous voulez                 -\n");
         printf("- Si vous voulez la derniere version entrez 0                   -\n");
@@ -71,7 +73,7 @@ void menu()
     printf("Bienvenue dans le menu de sauvegarde\n");
     char reponse;
     int choixmenu = 0;
-    
+
     do
     {
         printf("\n");
@@ -112,7 +114,7 @@ void menu()
             }
             case 1:
             {
-                
+                parcourir_dossier(path_save, "./Save");
                 break;
             }
             default:
@@ -128,9 +130,9 @@ void menu()
             printf("je suis la\n");
             int version = get_version();
             printf("Version %d\n", version);
-            //verif = verifier_fichier_ou_dossier(path_save);
+            // verif = verifier_fichier_ou_dossier(path_save);
             verif = 0;
-            
+
             switch (verif)
             {
             case -1:
@@ -169,5 +171,4 @@ void menu()
             printf("Erreur de saisie");
         }
     } while (choixmenu != 1 && choixmenu != 2 && choixmenu != 3 && choixmenu != 4);
-    
 }

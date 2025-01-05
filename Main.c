@@ -14,41 +14,56 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-
-int main()
+int main(int argc, char *argv[])
 {
     char choix[10] = "Network";
     pid_t pid;
 
     pid = fork(); // Créer un processus fils
 
-    if (pid == -1) {
+    if (pid == -1)
+    {
         // Gestion des erreurs de fork
         perror("Erreur lors du fork");
         exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) {
-        // Processus fils
-        if (strcmp(choix, "Main") == 0) {
-            printf("Processus fils : Lancement de Main...\n");
-            execl("./Main", "Main", NULL); // Lancer Main si l'utilisateur choisit "Main"
-            perror("Erreur lors de l'exécution de Main");
-        } else if (strcmp(choix, "Network") == 0) {
+    if (pid == 0)
+    {
+        if (strcmp(choix, "Network") == 0)
+        {
             printf("Processus fils : Lancement de Network...\n");
             execl("./Network", "Network", NULL); // Lancer Network si l'utilisateur choisit "Network"
             perror("Erreur lors de l'exécution de Network");
-        } else {
-            // Si l'utilisateur ne fait pas un choix valide
+        }
+        else
+        {
             printf("Choix invalide : %s\n", choix);
             exit(EXIT_FAILURE);
         }
-    } else {
-        // Processus parent : attendre la fin du processus fils
-        printf("Processus parent : L'exécutable a terminé.\n");
+    }
+    if (argc == 1)
+    {
+        menu();
+    }
+    else if (argc == 2)
+    {
+        Chunk chunks[100];
+        int Nchunk = compute_chunk(basename(argv[1]), argv[1], chunks);
+        sauvegarder(chunks, Nchunk, basename(argv[1]), argv[1]);
+    }
+    else if (argc == 3)
+    {
+        int version = get_version();
+        recup_save_content(basename(argv[1]), argv[1], version);
+        printf("Version %d restaurée\n", version);
+    }
+    else
+    {
+        // Nombre d'arguments invalide
+        printf("Nombre d'arguments invalide\n");
+        exit(EXIT_FAILURE);
     }
 
-    menu();
-    
     return EXIT_SUCCESS;
 }
