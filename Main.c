@@ -45,7 +45,6 @@ int main()
         }
     } else {
         // Processus parent : attendre la fin du processus fils
-        wait(NULL); // Attendre la fin du processus fils
         printf("Processus parent : L'exécutable a terminé.\n");
     }
 
