@@ -10,9 +10,6 @@
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT 8080
-#define MAX_BUFFER_SIZE 1024
-#define SERVER_PATH "./SERVER/"  // Dossier où les fichiers seront enregistrés
-
 
 int send_network(char *filepath) {
     int sock;
@@ -45,12 +42,39 @@ int send_network(char *filepath) {
         exit(EXIT_FAILURE);
     }
 
+    // Extraire le nom du fichier sans chemin
+    char *filename = strrchr(filepath, '/');
+    if (filename != NULL) {
+        filename++;  // Avancer après le '/'
+    } else {
+        filename = filepath;  // Le fichier est déjà un nom sans chemin
+    }
+
+    // Envoyer la taille du nom du fichier
+    size_t filename_length = strlen(filename);
+    if (send(sock, &filename_length, sizeof(filename_length), 0) == -1) {
+        perror("Filename length send failed");
+        close(file_fd);
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
     // Envoyer le nom du fichier
-    send(sock, filepath, strlen(filepath), 0);
+    if (send(sock, filename, filename_length, 0) == -1) {
+        perror("Filename send failed");
+        close(file_fd);
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
 
     // Lire le fichier et l'envoyer au serveur
     while ((bytes_read = read(file_fd, buffer, MAX_BUFFER_SIZE)) > 0) {
-        send(sock, buffer, bytes_read, 0);
+        if (send(sock, buffer, bytes_read, 0) == -1) {
+            perror("Send failed");
+            close(file_fd);
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
     }
 
     printf("File '%s' sent successfully\n", filepath);

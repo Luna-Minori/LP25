@@ -66,6 +66,7 @@
     "file_modifier.h": "c",
     "string.h": "c",
     "file_handler.h": "c",
-    "libgen.h": "c"
+    "libgen.h": "c",
+    "buffer": "c"
   }
 }

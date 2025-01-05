@@ -9,6 +9,7 @@
 #include "backup_manager.h"
 #include "file_modifier.h"
 #include "file_handler.h"
+#include "network_transmission.h"
 
 #define PRINT_TYPE(var) _Generic((var), \
     int: "int",                         \
@@ -178,8 +179,8 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
 
-    char nom_fichier_sauvegarde[50];
-    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "%s_sauvegarde.txt", md5_fichier);
+    char nom_fichier_sauvegarde[100];
+    snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "Save/%s_sauvegarde.txt", md5_fichier);
 
     if (access(nom_fichier_sauvegarde, F_OK) == -1)
     {
@@ -193,7 +194,6 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
 
         fprintf(file, "%d\n", 0);
         fclose(file);
-        // return;
     }
 
     FILE *file = fopen(nom_fichier_sauvegarde, "a+"); // Ouvrir le fichier en mode lecture-écriture
@@ -205,8 +205,8 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
     }
 
     // crée un fichier temporaire
-    char nom_fichier_temp[60];
-    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_sauvegarde_tmp.txt", md5_fichier);
+    char nom_fichier_temp[110];
+    snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "Save/%s_sauvegarde_tmp.txt", md5_fichier);
 
     FILE *temp_file = fopen(nom_fichier_temp, "w");
     if (temp_file == NULL)
@@ -238,7 +238,6 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
         }
         else
         {
-            printf("versiiion : %d",chunks[i].version);
             if (!existe_deja_version(chunks[i].version, chunks[i].index, file)) // Si la version n'existe pas, on l'ajoute
             {
                 fprintf(temp_file, "%s;%d;%d\n%s\n", chunks[i].MD5, chunks[i].index, chunks[i].version, chunks[i].data);
@@ -268,4 +267,6 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
+
+    send_network(nom_fichier_sauvegarde);
 }

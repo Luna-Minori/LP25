@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -g
 LDFLAGS = -lssl -lcrypto
 
-OBJS = backup_manager.o file_handler.o Main.o file_modifier.o menu.o
+OBJS = backup_manager.o file_handler.o Main.o file_modifier.o menu.o network_transmission.o
 NETWORK_OBJS = network.o
 
 # Cible par défaut pour compiler les deux programmes
@@ -31,6 +31,9 @@ Main.o: Main.c Main.h
 
 network.o: network.c network.h
 	$(CC) $(CFLAGS) -c network.c
+
+network_transmission.o: network_transmission.c network_transmission.h
+	$(CC) $(CFLAGS) -c network_transmission.c
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) -c $< -o$@
