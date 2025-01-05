@@ -369,7 +369,7 @@ void parcourir_dossier(char *dossier, char *dossier_save)
         if (stat(chemin_complet, &st) == 0 && S_ISDIR(st.st_mode))
         {
             char chemin_save_case[1024];
-            compute_md5_case(chemin_complet, md5);
+            char *md5 = get_md5_of_directory_name("/home/Max/LP25/Save/");
             FILE *l = fopen("testmd5.txt", "w");
             fprintf(l, "%s", md5);
             fclose(l);
@@ -385,7 +385,6 @@ void parcourir_dossier(char *dossier, char *dossier_save)
             parcourir_dossier(chemin_complet, chemin_save_case);
         }
         else{
-
             compute_md5_file(fichieroudossier->d_name, md5, &md5_len);
             snprintf(chemin_save, sizeof(chemin_save), "%s/%s", dossier_save, md5);
 

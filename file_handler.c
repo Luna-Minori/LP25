@@ -146,6 +146,28 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
     return index_data + 1;
 }
 
+
+char* get_md5_of_directory_name(const char *dir_path) {
+    unsigned char md5[EVP_MAX_MD_SIZE];
+    unsigned int md5_len;
+    char *md5_string = malloc(33);
+
+    if (!md5_string) {
+        perror("Erreur lors de l'allocation de mémoire pour md5_string");
+        return NULL;
+    }
+
+    compute_md5_file(dir_path, md5, &md5_len);
+
+    for (unsigned int i = 0; i < md5_len; i++) {
+        sprintf(&md5_string[i * 2], "%02x", md5[i]);
+    }
+    md5_string[md5_len * 2] = '\0';
+
+    return md5_string;
+}
+
+
 void compute_md5_case(const char *dir_path, unsigned char *md5_out) {
     DIR *dir = opendir(dir_path);
     if (!dir) {

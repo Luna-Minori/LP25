@@ -77,7 +77,7 @@ int send_network(char *filepath) {
         }
     }
 
-    printf("File '%s' sent successfully\n", filepath);
+    printf("Fichier '%s' envoyé\n", filepath);
 
     // Fermer la connexion et le fichier
     close(file_fd);
