@@ -54,6 +54,24 @@ int get_version()
     return version;
 }
 
+int get_network()
+{
+    char reponse[256];
+    int temp;
+
+    do
+    {
+        printf("-----------------------------------------------------------------\n");
+        printf("- Entrez 0 si vous cherchez un fichier en local et 1 pour un    -\n");
+        printf("- fichier sur le server                                         -\n");
+        printf("-----------------------------------------------------------------\n");
+        fgets(reponse, sizeof(reponse), stdin);
+        reponse[strcspn(reponse, "\n")] = '\0';
+        temp = atoi(reponse);
+    } while (temp != 0 && temp != 1); // Corrected loop condition to avoid infinite loop
+    return temp;
+}
+
 void Entry_sauvegarde(char *path_save)
 {
     path_save[0] = '\0';
@@ -131,6 +149,7 @@ void menu()
             int version = get_version();
             printf("Version %d\n", version);
             // verif = verifier_fichier_ou_dossier(path_save);
+            int bool_network = get_network(); // 0 = local, 1 = network
             verif = 0;
 
             switch (verif)
@@ -143,7 +162,7 @@ void menu()
             case 0:
             {
                 printf("En travaux");
-                recup_save_content(basename(path_save), path_save, version);
+                recup_save_content(basename(path_save), path_save, version, bool_network);
                 printf("Version %d restaurée\n", version);
                 break;
             }
@@ -161,7 +180,12 @@ void menu()
         case 3:
         {
             // parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
-            recup_network("./test.txt", 1);
+            // recup_network("./test.txt", 1);
+            char *test = "test.txt";
+            char *test2 = "./test.txt";
+            printf("je suis la\n");
+            recup_save_content(test, test2, 1, 0);
+
             break;
         }
         case 4:
