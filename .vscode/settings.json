@@ -67,6 +67,7 @@
     "string.h": "c",
     "file_handler.h": "c",
     "libgen.h": "c",
-    "buffer": "c"
+    "buffer": "c",
+    "socket": "c"
   }
 }

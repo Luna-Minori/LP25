@@ -160,7 +160,8 @@ void menu()
         }
         case 3:
         {
-            parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
+            // parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
+            recup_network("./test.txt", 1);
             break;
         }
         case 4:
