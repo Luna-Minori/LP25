@@ -96,7 +96,8 @@ void menu()
             char path_save[256];
             int verif;
             Entry_sauvegarde(path_save);
-            verif = verifier_fichier_ou_dossier(path_save);
+            //verif = verifier_fichier_ou_dossier(path_save);
+            verif = 0;
             switch (verif)
             {
             case -1:
