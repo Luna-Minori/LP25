@@ -100,8 +100,7 @@ void menu()
         printf("-----------------------------------------------------------------\n");
         printf("-[1] - Sauvegarder un fichier ou un dossier                     -\n");
         printf("-[2] - Recuperer une versions d'un fichier ou d'un dossier      -\n");
-        printf("-[3] - test                                                     -\n");
-        printf("-[4] - quitter                                                  -\n");
+        printf("-[3] - quitter                                                  -\n");
         printf("-----------------------------------------------------------------\n");
         printf("\nQue souhaitez vous faire ? [1/2/3]\n");
         scanf(" %c", &reponse);
@@ -179,20 +178,10 @@ void menu()
         }
         case 3:
         {
-            // parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
-            // recup_network("./test.txt", 1);
-            char *test = "fichier_test.txt";
-            char *test2 = "./fichier_test.txt";
-            recup_save_content(test, test2, 1, 1);
-
-            break;
-        }
-        case 4:
-        {
             break;
         }
         default:
             printf("Erreur de saisie");
         }
-    } while (choixmenu != 1 && choixmenu != 2 && choixmenu != 3 && choixmenu != 4);
+    } while (choixmenu != 1 && choixmenu != 2 && choixmenu != 3);
 }

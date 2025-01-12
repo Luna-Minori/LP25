@@ -163,8 +163,6 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
         {
             nombre_chunks++;
         }
-        printf("nombre chunk %d\n", nombre_chunks);
-        printf("ligne : %s\n\n", ligne);
     }
 
     fclose(file);
@@ -175,31 +173,24 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     }
     int k = 1;
     int pointeur = 0;
-    printf("nombre chunk : %d\n", nombre_chunks);
     int i = 0;
     while (i < nombre_chunks)
     {
         Chunk chunk;
 
         char lignes[4096] = {};
-        printf("k : %d\n", k);
-        if (file_content[k][32] == ';')
+        if (file_content[k][32] == ';') // recup l'index et la version du chunk
         {
-            printf("je suis la kikijk \n");
             strncpy(chunk.MD5, file_content[k], 32);
             char temp_index[16] = {};
             int h = 33;
             while (file_content[k][h] != ';')
             {
-                // char temp[2] = {file_content[k][h], '\0'};
                 strncat(temp_index, &file_content[k][h], 1);
-                printf("temp_index : %s", temp_index);
-                printf("&file_content[k][h] : %c", file_content[k][h]);
                 h++;
             }
             int taille = strlen(temp_index);
             temp_index[taille] = '\0';
-            printf("atoi : %d \n", atoi(temp_index));
             chunk.index = atoi(temp_index);
             char temp_version[16] = {};
             h++;
@@ -212,17 +203,15 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
             chunk.version = atoi(temp_version);
         }
         k++;
-        while (k < nombre_lignes && pointeur < 4096 && file_content[k][32] != ';')
+        while (k < nombre_lignes && pointeur < 4096 && file_content[k][32] != ';') // recup les données
         {
             pointeur = 0;
 
             while (pointeur < strlen(file_content[k]))
             {
                 strncat(lignes, &file_content[k][pointeur], 1);
-                printf("pointeur %d\n", pointeur);
                 pointeur++;
             }
-            printf("k dans while : %d\n", k);
             k++;
         }
         if (pointeur > 4096)
