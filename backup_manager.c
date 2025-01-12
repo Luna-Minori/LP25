@@ -11,6 +11,7 @@
 #include "file_handler.h"
 #include "network_transmission.h"
 
+// define afin de pouvoir print tout type de données
 #define PRINT_TYPE(var) _Generic((var), \
     int: "int",                         \
     float: "float",                     \
@@ -23,7 +24,6 @@ void copier_fichier(FILE *source, FILE *dest, int ligne_debut)
 { // copie un fichier dans un autre fichier
 
     rewind(source);
-    // rewind(dest);
 
     for (int i = 0; i < ligne_debut; i++)
     {
@@ -40,7 +40,7 @@ void copier_fichier(FILE *source, FILE *dest, int ligne_debut)
 }
 
 int existe_deja_index(int index, FILE *file)
-{
+{// lit tout un fichier de sauvegarde et vérifie si un index donné en paramètre existe déjà
     char ligne[4096];
     int index_ligne = -1;
     rewind(file); // Rewind pour lire depuis le début du fichier
@@ -49,7 +49,7 @@ int existe_deja_index(int index, FILE *file)
     {
         if (ligne[0] != '\n' || strlen(ligne) > 33)
         {
-            if (ligne[32] == ';')
+            if (ligne[32] == ';') // dans ce cas, on a une ligne "identité" de chunk
             {
                 char temp_index[16] = {};
                 int i = 33;
@@ -58,6 +58,7 @@ int existe_deja_index(int index, FILE *file)
                     char temp[2] = {ligne[i]};
                     strncat(temp_index, temp, 1);
                     i++;
+                    // entre le premier ; et le deuxième, on a l'index, on lis tout les caractères entre les 2 et on les transforme en int
                 }
                 index_ligne = atoi(temp_index);
             }
@@ -71,7 +72,7 @@ int existe_deja_index(int index, FILE *file)
 }
 
 int existe_deja_version(int version, int index, FILE *file)
-{
+{// même principe que la fonction précédente, mais pour la version
     char ligne[4096];
     int version_ligne = -1;
     int index_ligne = -1;
@@ -94,7 +95,7 @@ int existe_deja_version(int version, int index, FILE *file)
                     i++;
                 }
                 index_ligne = atoi(temp_index);
-
+                // si on est bien sur la ligne avec l'index recherché, on cherche la version
                 if (index_ligne == index)
                 {
 
@@ -171,7 +172,7 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
 {
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-    compute_md5_file(path, md5, &md5_len);
+    compute_md5_file(path, md5, &md5_len); // Calcul du md5 a partir du path
 
     char md5_fichier[33];
     for (int i = 0; i < 16; ++i)
@@ -181,9 +182,10 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
 
     char nom_fichier_sauvegarde[100];
     snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "Save/%s_sauvegarde.txt", md5_fichier);
-
+    // On crée le nom du fichier de sauvegarde en fonction du md5
+    
     if (access(nom_fichier_sauvegarde, F_OK) == -1)
-    {
+    {// si le fichier n'existe pas, on le crée et on écrit 0 dans la première ligne (version maximale du fichier)
         FILE *file = fopen(nom_fichier_sauvegarde, "w");
 
         if (file == NULL)
@@ -255,13 +257,13 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
     fclose(file);
     fclose(temp_file);
 
-    // Remplacer l'ancien fichier par le fichier temporaire
+    // On supprime l'ancien fichier de sauvegarde
     if (remove(nom_fichier_sauvegarde) != 0)
     {
         perror("Erreur de suppression de l'ancien fichier");
         return;
     }
-
+    // On renomme le fichier temporaire comme le fichier de sauvegarde
     if (rename(nom_fichier_temp, nom_fichier_sauvegarde) != 0)
     {
         perror("Erreur de renommage du fichier temporaire");

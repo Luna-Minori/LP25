@@ -25,7 +25,7 @@ void reset_str(char *str)
 }
 
 void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md5_len)
-{ // genere un md5
+{ // genere un md5 a partir d'un fichier
     EVP_MD_CTX *context = EVP_MD_CTX_new();
     if (!context)
     {
@@ -53,7 +53,7 @@ void compute_md5_file(const char *filename, unsigned char *md5, unsigned int *md
 }
 
 void compute_md5_chunk(char *data, size_t taille, char *md5_string)
-{
+{// genère un md5 à partir d'un chunk
     EVP_MD_CTX *ctx;
     unsigned char md5_digest[EVP_MAX_MD_SIZE];
     unsigned int md5_length;
@@ -104,10 +104,10 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
         return -1;
     }
 
-    char chunk_data[10][4096] = {0};
-    int index_data = 0;
-    int chunk_index = 0;
-    char *contenu = read_file(nom_fichier);
+    char chunk_data[10][4096] = {0}; // Tableau pour stocker les données des chunks
+    int index_data = 0; // Index pour les chunks
+    int chunk_index = 0; // Index pour parcourir le contenu du fichier
+    char *contenu = read_file(nom_fichier); // Lire le contenu du fichier
     if (contenu == NULL)
     {
         perror("Erreur lors de la lecture du fichier");
@@ -116,12 +116,13 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
     }
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-    compute_md5_file(path, md5, &md5_len);
+    compute_md5_file(path, md5, &md5_len); // Calculer le MD5 du chemin
 
     while (contenu[chunk_index] != '\0')
     {
         if (chunk_index % 4096 == 0 && chunk_index != 0)
         {
+            // Si un chunk est complet, le stocker dans le tableau de chunks
             chunks[index_data].index = index_data + 1;
             chunks[index_data].version = 1;
             chunks[index_data].data = strdup(chunk_data[index_data]);
@@ -129,12 +130,13 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
             memset(chunk_data[index_data], 0, sizeof(chunk_data[index_data]));
             index_data++;
         }
-        strncat(chunk_data[index_data], &contenu[chunk_index], 1);
+        strncat(chunk_data[index_data], &contenu[chunk_index], 1); // Ajouter un caractère au chunk courant
         chunk_index++;
     }
 
     if (chunk_index % 4096 != 0)
     {
+        // Si le dernier chunk n'est pas complet, le stocker également
         chunks[index_data].index = index_data + 1;
         chunks[index_data].version = 1;
         chunks[index_data].data = strdup(chunk_data[index_data]);
@@ -143,11 +145,12 @@ int compute_chunk(char *nom_fichier, char *path, Chunk *chunks)
 
     fclose(fichier_entree);
     free(contenu);
-    return index_data + 1;
+    return index_data + 1; // Retourner le nombre de chunks créés
 }
 
 
-char* get_md5_of_directory_name(const char *dir_path) {
+char* get_md5_of_directory_name(const char *dir_path) 
+{//génère un md5 à partir du nom d'un répertoire
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
     char *md5_string = malloc(33);

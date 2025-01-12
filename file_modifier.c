@@ -18,7 +18,7 @@
 #define CHUNK_SIZE 4096
 
 int element_dans_liste(int element, int *liste, int taille)
-{
+{// vérifie si un élément est dans une liste
     for (int i = 0; i < taille; i++)
     {
         if (liste[i] == element)
@@ -30,7 +30,7 @@ int element_dans_liste(int element, int *liste, int taille)
 }
 
 char **read_file_lines(const char *filename)
-{
+{// lit un fichier ligne par ligne et retourne un tableau de chaînes de caractères
     FILE *file = fopen(filename, "r");
     if (file == NULL)
     {
@@ -68,14 +68,14 @@ char **read_file_lines(const char *filename)
         fclose(file);
         return NULL;
     }
-    lines[num_lines] = NULL; // Add null terminator
+    lines[num_lines] = NULL;
 
     fclose(file);
     return lines;
 }
 
 char *read_file(char *filename)
-{
+{// lit un fichier et retourne son contenu sous forme de chaîne de caractères
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
     {
@@ -131,7 +131,7 @@ char *read_file(char *filename)
 }
 
 int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int network)
-{
+{// lit un fichier de sauvegarde et stocke les chunks dans un tableau les uns a la suite des autres
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
     compute_md5_file(path, md5, &md5_len);
@@ -156,9 +156,10 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     }
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
     char ligne[4096];
+
     int nombre_chunks = 0;
     while (fgets(ligne, sizeof(ligne), file))
-    {
+    {// compte le nombre de chunks dans le fichier en recherchant le nombre de lignes avec un point-virgule au 33ème caractère
         if (ligne[32] == ';' && strlen(ligne) > 32)
         {
             nombre_chunks++;
@@ -179,7 +180,7 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
         Chunk chunk;
 
         char lignes[4096] = {};
-        if (file_content[k][32] == ';') // recup l'index et la version du chunk
+        if (file_content[k][32] == ';') // recup l'index et la version du chunk et les insère dans la structure
         {
             strncpy(chunk.MD5, file_content[k], 32);
             char temp_index[16] = {};
@@ -203,7 +204,7 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
             chunk.version = atoi(temp_version);
         }
         k++;
-        while (k < nombre_lignes && pointeur < 4096 && file_content[k][32] != ';') // recup les données
+        while (k < nombre_lignes && pointeur < 4096 && file_content[k][32] != ';') // recup la data du chunk et l'insère dans la structure
         {
             pointeur = 0;
 
@@ -214,7 +215,7 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
             }
             k++;
         }
-        if (pointeur > 4096)
+        if (pointeur > 4096) // si on est ai milieu d'un chunk, on recule d'une ligne
         {
             pointeur = 0;
             k--;
@@ -229,7 +230,7 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
 }
 
 void recup_save_content(char *nom_fichier, char *path, int version, int network)
-{
+{// récupère le contenu d'un fichier sauvegardé afin d'en restaurer le contenu à une version donnée
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
     compute_md5_file(path, md5, &md5_len);
@@ -268,7 +269,7 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         return;
     }
 
-    long file_size = ftell(file);
+    long file_size = ftell(file); // Récupère la taille du fichier
     if (file_size == -1L)
     {
         perror("Erreur: Taille du fichier de sauvegarde inconnue");
@@ -283,20 +284,17 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
 
     if (chunks->data == NULL)
     {
-        printf("marche pas");
+        perror("Erreur: Impossible de lire les chunks du fichier de sauvegarde");
         return;
     }
     char nom_fichier_temp[256 + 9];
-    printf("nom_fichier_sauvegarde : %s", nom_fichier_sauvegarde);
     int compteur = 0;
-    char temp_nom[256] = {0}; // Allocate memory and initialize to zero
+    char temp_nom[256] = {0};
     while (compteur < strlen(nom_fichier) - 4)
     {
         strncat(temp_nom, &nom_fichier[compteur], 1);
         compteur++;
     }
-
-    printf("Nom de fichier après modification : %s\n", temp_nom);
 
     if (network == 0)
     {
@@ -306,7 +304,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
     {
         snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", temp_nom);
     }
-    printf("nom_fichier_temp : %s \n", nom_fichier_temp);
 
     FILE *temp_file = fopen(nom_fichier_temp, "wb");
     if (temp_file == NULL)
@@ -314,53 +311,49 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         perror("Erreur: Impossible de créer le fichier temporaire");
         return;
     }
+
     int i = 0;
     int index_max = 0;
+
     while (chunks[i].data != NULL)
-    {
+    {// On cherche l'index maximal dans les chunks
         if (chunks[i].index > index_max)
         {
             index_max = chunks[i].index;
         }
-        printf("chunks : %d\n", chunks[i].index);
-        printf(" i %d", i);
         i++;
     }
 
     int index_versions_proches[index_max + 1];
     for (int j = 0; j < index_max; j++)
-    {
+    {// J'initalise le tableau des index des versions les plus proches à -1
         index_versions_proches[j] = -1;
     }
 
     i = 0;
     while (chunks[i].data != NULL)
-    {
+    {// On cherche les index des chunks des versions les plus proches de la version demandée (au bon index)
         if (index_versions_proches[(chunks[i].index - 1)] == -1)
-        {
+        {// si l'index vaut moins 1 c'est qu'il n'y a pas de version à cet index, on l'initialise
             index_versions_proches[(chunks[i].index - 1)] = i;
         }
 
         else
         {
             if (chunks[index_versions_proches[(chunks[i].index) - 1]].version < chunks[i].version && chunks[i].version <= version)
-            {
+            {// Si la version est plus proche de celle demandée sans la dépasser, on la remplace
                 index_versions_proches[(chunks[i].index) - 1] = i;
             }
         }
         i++;
     }
-    printf(" index max : %d \n", index_max);
     for (int k = 0; k < index_max; k++)
     {
         fprintf(temp_file, "%s", chunks[index_versions_proches[k]].data);
-        printf("affiche : %s \n", chunks[index_versions_proches[k]].data);
-        printf("affiche 2 : %d \n", index_versions_proches[k]);
     }
     fclose(temp_file);
-    printf("hello %s", nom_fichier);
-    // Remplacer l'ancien fichier par le fichier temporaire
-    /*
+    
+    //Remplacer l'ancien fichier par le fichier temporaire
     if (remove(nom_fichier) != 0)
     {
         perror("Erreur de suppression de l'ancien fichier");
@@ -371,11 +364,10 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
-    */
 }
 
 void creer_dossier(const char *chemin_dossier)
-{
+{// crée un dossier a un path demandé
     if (mkdir(chemin_dossier, 0777) == 0) // linux mkdir(chemin_dossier, 0755) pour les permissons
     {
         printf("Création du dossier : %s\n", chemin_dossier);
@@ -387,7 +379,7 @@ void creer_dossier(const char *chemin_dossier)
 }
 
 void parcourir_dossier(char *dossier, char *dossier_save)
-{
+{ // parcours un dossier et sauvegarde les fichiers et dossiers dans un dossier de sauvegarde
     struct dirent *fichieroudossier;
     DIR *dir = opendir(dossier);
 

@@ -50,7 +50,7 @@ int get_version()
         fgets(reponse, sizeof(reponse), stdin);
         reponse[strcspn(reponse, "\n")] = '\0';
         version = atoi(reponse);
-    } while (version < 0); // Corrected loop condition to avoid infinite loop
+    } while (version < 0); // Pour éviter les bloucles infinies
     return version;
 }
 
@@ -68,7 +68,7 @@ int get_network()
         fgets(reponse, sizeof(reponse), stdin);
         reponse[strcspn(reponse, "\n")] = '\0';
         temp = atoi(reponse);
-    } while (temp != 0 && temp != 1); // Corrected loop condition to avoid infinite loop
+    } while (temp != 0 && temp != 1); // Pour éviter les bloucles infinies
     return temp;
 }
 
@@ -144,10 +144,7 @@ void menu()
             char path_save[256];
             int verif;
             Entry_sauvegarde(path_save);
-            printf("je suis la\n");
             int version = get_version();
-            printf("Version %d\n", version);
-            // verif = verifier_fichier_ou_dossier(path_save);
             int bool_network = get_network(); // 0 = local, 1 = network
             verif = 0;
 
