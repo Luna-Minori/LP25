@@ -169,16 +169,17 @@ int existe_deja_md5(char *md5, int version, int index, FILE *file)
 
 void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *path)
 {
+    
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
     compute_md5_file(path, md5, &md5_len);
-
+    printf("1\n");
     char md5_fichier[33];
     for (int i = 0; i < 16; ++i)
     {
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
-
+    printf("2\n");
     char nom_fichier_sauvegarde[100];
     snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "Save/%s_sauvegarde.txt", md5_fichier);
 
@@ -267,6 +268,6 @@ void sauvegarder(Chunk *chunks, int nombre_de_chunks, char *nom_fichier, char *p
         perror("Erreur de renommage du fichier temporaire");
         return;
     }
-
-    send_network(nom_fichier_sauvegarde);
+    printf("3\n");
+    //send_network(nom_fichier_sauvegarde);
 }

@@ -16,55 +16,12 @@
 
 int main(int argc, char *argv[])
 {
-    char choix[10] = "Network";
-    pid_t pid;
-
-    pid = fork(); // Créer un processus fils
-
-    if (pid == -1)
-    {
-        // Gestion des erreurs de fork
-        perror("Erreur lors du fork");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pid == 0)
-    {
-        if (strcmp(choix, "Network") == 0)
-        {
-            printf("Processus fils : Lancement de Network...\n");
-            execl("./Network", "Network", NULL); // Lancer Network si l'utilisateur choisit "Network"
-            perror("Erreur lors de l'exécution de Network");
-        }
-        else
-        {
-            printf("Choix invalide : %s\n", choix);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    if (argc == 1)
-    {
-        menu();
-    }
-    else if (argc == 2)
-    {
-        Chunk chunks[100];
-        int Nchunk = compute_chunk(basename(argv[1]), argv[1], chunks);
-        sauvegarder(chunks, Nchunk, basename(argv[1]), argv[1]);
-    }
-    else if (argc == 3)
-    {
-        int version = get_version();
-        recup_save_content(basename(argv[1]), argv[1], version);
-        printf("Version %d restaurée\n", version);
-    }
-    else
-    {
-        // Nombre d'arguments invalide
-        printf("Nombre d'arguments invalide\n");
-        exit(EXIT_FAILURE);
-    }
-
-    return EXIT_SUCCESS;   
+    char path_save[40] = "/home/Max/LP25/testmax/CACA.txt";
+    Chunk chunks[100];
+    printf("Erreur de création du fichier la \n");
+    int Nchunk = compute_chunk("CACA.txt", path_save, chunks);
+    printf("Erreur de création du fichier la \n");
+    sauvegarder(chunks, Nchunk, "CACA.txt", path_save);
+    printf("Nchunk = %d\n", Nchunk);
+    return 0;
 }
