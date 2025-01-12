@@ -68,6 +68,7 @@
     "file_handler.h": "c",
     "libgen.h": "c",
     "buffer": "c",
-    "socket": "c"
+    "socket": "c",
+    "sstream": "c"
   }
 }

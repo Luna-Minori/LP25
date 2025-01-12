@@ -183,7 +183,6 @@ void menu()
             // recup_network("./test.txt", 1);
             char *test = "test.txt";
             char *test2 = "./test.txt";
-            printf("je suis la\n");
             recup_save_content(test, test2, 1, 0);
 
             break;

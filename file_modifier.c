@@ -132,10 +132,8 @@ char *read_file(char *filename)
 
 int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int network)
 {
-    printf("je suis la -1");
     unsigned char md5[EVP_MAX_MD_SIZE];
     unsigned int md5_len;
-    printf("je suis la 0");
     compute_md5_file(path, md5, &md5_len);
     char md5_fichier[33];
     for (int i = 0; i < 16; ++i)
@@ -143,7 +141,6 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
     char nom_fichier_sauvegarde[57];
-    printf("je suis la 1");
     if (network == 0)
     {
         snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "./Save/%s_sauvegarde.txt", md5_fichier);
@@ -157,7 +154,6 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     {
         return 0;
     }
-    printf("je suis la 2");
     FILE *file = fopen(nom_fichier_sauvegarde, "rb");
     char ligne[4096];
     int nombre_chunks = 0;
@@ -170,7 +166,6 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     }
 
     fclose(file);
-    printf("je suis la 3");
     int nombre_lignes = 0;
     while (file_content[nombre_lignes] != NULL)
     {
@@ -178,13 +173,11 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     }
     int k = 1;
     int pointeur = 0;
-    printf("je suis la 4");
     for (int i = 0; i < nombre_chunks; i++)
     {
         Chunk chunk;
 
-        char lignes[4097] = {};
-        printf("hello");
+        char lignes[4096] = {};
         if (file_content[k][32] == ';')
         {
 
@@ -209,9 +202,10 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
             chunk.version = atoi(temp_version);
         }
         k++;
-        while (k < nombre_lignes && file_content[k][32] != ';')
+        while (k < nombre_lignes && strlen(file_content[k]) > 32 && file_content[k][32] != ';')
         {
             pointeur = 0;
+
             while (pointeur < strlen(file_content[k]))
             {
                 strncat(lignes, &file_content[k][pointeur], 1);
@@ -243,8 +237,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
     {
         snprintf(&md5_fichier[i * 2], 3, "%02x", md5[i]);
     }
-
-    printf("nom_fichier : %s\n", nom_fichier);
     char nom_fichier_sauvegarde[57];
     if (network == 0)
     {
@@ -254,7 +246,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
     {
         snprintf(nom_fichier_sauvegarde, sizeof(nom_fichier_sauvegarde), "./SERVER/%s_sauvegarde.txt", md5_fichier);
     }
-    printf("nom_fichier_sauvegarde : %s\n", nom_fichier_sauvegarde);
     if (access(nom_fichier_sauvegarde, F_OK) == -1)
     {
         perror("Erreur: Le fichier de sauvegarde n'existe pas\n");
@@ -267,9 +258,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         perror("Erreur: Impossible d'ouvrir le fichier de sauvegarde");
         return;
     }
-
-    printf("HELLOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
-
     // Déplacez le curseur à la fin du fichier
     if (fseek(file, 0, SEEK_END) != 0)
     {
@@ -286,36 +274,34 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         return;
     }
 
-    printf("file_size : %ld\n", file_size);
-
-    if (file_size <= 0)
-    {
-        printf("Le fichier semble être vide ou invalide\n");
-    }
-    else
-    {
-        printf("je suis la 1\n");
-    }
-    printf("coucou"); // il crash la ( segmentation fault)
     rewind(file);
     fclose(file);
-    printf("hello");
-
-    Chunk *chunks = malloc(sizeof(Chunk) * 100);
-    printf("meee");
-    chunks->version = 1;
+    Chunk chunks[file_size];
     read_savefile_in_chunks(nom_fichier_sauvegarde, path, chunks, network);
-    printf("nom_fichier_sauvegarde : %s\n", nom_fichier_sauvegarde);
-    /*
+
+    if (chunks->data == NULL)
+    {
+        printf("marche pas");
+        return;
+    }
     char nom_fichier_temp[87];
+    printf("nom_fichier_sauvegarde : %s", nom_fichier_sauvegarde);
+
+    size_t len = strlen(nom_fichier);
+    if (len > 4)
+    {
+        nom_fichier[len - 4] = '\0';
+    }
+
     if (network == 0)
     {
-        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "./Save/%s_temp.txt", nom_fichier_sauvegarde);
+        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier);
     }
     else
     {
-        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "./SERVER/%s_temp.txt", nom_fichier_sauvegarde);
+        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier);
     }
+    printf("nom_fichier_temp : %s", nom_fichier_temp);
 
     FILE *temp_file = fopen(nom_fichier_temp, "wb");
     if (temp_file == NULL)
@@ -323,7 +309,7 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         perror("Erreur: Impossible de créer le fichier temporaire");
         return;
     }
-
+    printf("je suis la j");
     int i = 0;
     int index_max = 0;
     while (chunks[i].data != NULL)
@@ -342,6 +328,7 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
     }
 
     i = 0;
+    printf("je suis la 1");
     while (chunks[i].data != NULL)
     {
         if (index_versions_proches[(chunks[i].index - 1)] == -1)
@@ -358,14 +345,17 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         }
         i++;
     }
-
+    printf("coucu");
     for (int k = 0; k < index_max; k++)
     {
         fprintf(temp_file, "%s", chunks[index_versions_proches[k]].data);
+        printf("affiche : %s ", chunks[index_versions_proches[k]].data);
+        printf("affiche 2 : %d", index_versions_proches[k]);
     }
     fclose(temp_file);
-
+    printf("hello %s", nom_fichier);
     // Remplacer l'ancien fichier par le fichier temporaire
+    /*
     if (remove(nom_fichier) != 0)
     {
         perror("Erreur de suppression de l'ancien fichier");
