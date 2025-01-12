@@ -45,7 +45,6 @@ int get_version()
     {
         printf("-----------------------------------------------------------------\n");
         printf("- Entrez la versions du fichier que vous voulez                 -\n");
-        printf("- Si vous voulez la derniere version entrez 0                   -\n");
         printf("-----------------------------------------------------------------\n");
         fgets(reponse, sizeof(reponse), stdin);
         reponse[strcspn(reponse, "\n")] = '\0';
@@ -157,14 +156,13 @@ void menu()
             }
             case 0:
             {
-                printf("En travaux");
                 recup_save_content(basename(path_save), path_save, version, bool_network);
                 printf("Version %d restaurée\n", version);
                 break;
             }
             case 1:
             {
-                // parcourir_dossier(path_save);
+                parcourir_dossier(path_save, "./Save");
                 printf("En travaux");
                 break;
             }
