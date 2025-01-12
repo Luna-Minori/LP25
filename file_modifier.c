@@ -159,10 +159,12 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     int nombre_chunks = 0;
     while (fgets(ligne, sizeof(ligne), file))
     {
-        if (ligne[32] == ';')
+        if (ligne[32] == ';' && strlen(ligne) > 32)
         {
             nombre_chunks++;
         }
+        printf("nombre chunk %d\n", nombre_chunks);
+        printf("ligne : %s\n\n", ligne);
     }
 
     fclose(file);
@@ -173,23 +175,31 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
     }
     int k = 1;
     int pointeur = 0;
-    for (int i = 0; i < nombre_chunks; i++)
+    printf("nombre chunk : %d\n", nombre_chunks);
+    int i = 0;
+    while (i < nombre_chunks)
     {
         Chunk chunk;
 
         char lignes[4096] = {};
+        printf("k : %d\n", k);
         if (file_content[k][32] == ';')
         {
-
+            printf("je suis la kikijk \n");
             strncpy(chunk.MD5, file_content[k], 32);
             char temp_index[16] = {};
             int h = 33;
             while (file_content[k][h] != ';')
             {
-                char temp[2] = {file_content[k][h], '\0'};
-                strncat(temp_index, temp, 1);
+                // char temp[2] = {file_content[k][h], '\0'};
+                strncat(temp_index, &file_content[k][h], 1);
+                printf("temp_index : %s", temp_index);
+                printf("&file_content[k][h] : %c", file_content[k][h]);
                 h++;
             }
+            int taille = strlen(temp_index);
+            temp_index[taille] = '\0';
+            printf("atoi : %d \n", atoi(temp_index));
             chunk.index = atoi(temp_index);
             char temp_version[16] = {};
             h++;
@@ -202,15 +212,17 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
             chunk.version = atoi(temp_version);
         }
         k++;
-        while (k < nombre_lignes && strlen(file_content[k]) > 32 && file_content[k][32] != ';')
+        while (k < nombre_lignes && pointeur < 4096 && file_content[k][32] != ';')
         {
             pointeur = 0;
 
             while (pointeur < strlen(file_content[k]))
             {
                 strncat(lignes, &file_content[k][pointeur], 1);
+                printf("pointeur %d\n", pointeur);
                 pointeur++;
             }
+            printf("k dans while : %d\n", k);
             k++;
         }
         if (pointeur > 4096)
@@ -221,6 +233,7 @@ int read_savefile_in_chunks(char *filename, char *path, Chunk *chunks, int netwo
 
         chunk.data = strdup(lignes);
         chunks[i] = chunk;
+        i++;
     }
     free(file_content);
     return nombre_chunks;
@@ -284,24 +297,27 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         printf("marche pas");
         return;
     }
-    char nom_fichier_temp[87];
+    char nom_fichier_temp[256 + 9];
     printf("nom_fichier_sauvegarde : %s", nom_fichier_sauvegarde);
-
-    size_t len = strlen(nom_fichier);
-    if (len > 4)
+    int compteur = 0;
+    char temp_nom[256] = {0}; // Allocate memory and initialize to zero
+    while (compteur < strlen(nom_fichier) - 4)
     {
-        nom_fichier[len - 4] = '\0';
+        strncat(temp_nom, &nom_fichier[compteur], 1);
+        compteur++;
     }
+
+    printf("Nom de fichier après modification : %s\n", temp_nom);
 
     if (network == 0)
     {
-        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier);
+        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", temp_nom);
     }
     else
     {
-        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", nom_fichier);
+        snprintf(nom_fichier_temp, sizeof(nom_fichier_temp), "%s_temp.txt", temp_nom);
     }
-    printf("nom_fichier_temp : %s", nom_fichier_temp);
+    printf("nom_fichier_temp : %s \n", nom_fichier_temp);
 
     FILE *temp_file = fopen(nom_fichier_temp, "wb");
     if (temp_file == NULL)
@@ -309,7 +325,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         perror("Erreur: Impossible de créer le fichier temporaire");
         return;
     }
-    printf("je suis la j");
     int i = 0;
     int index_max = 0;
     while (chunks[i].data != NULL)
@@ -318,6 +333,8 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         {
             index_max = chunks[i].index;
         }
+        printf("chunks : %d\n", chunks[i].index);
+        printf(" i %d", i);
         i++;
     }
 
@@ -328,7 +345,6 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
     }
 
     i = 0;
-    printf("je suis la 1");
     while (chunks[i].data != NULL)
     {
         if (index_versions_proches[(chunks[i].index - 1)] == -1)
@@ -345,12 +361,12 @@ void recup_save_content(char *nom_fichier, char *path, int version, int network)
         }
         i++;
     }
-    printf("coucu");
+    printf(" index max : %d \n", index_max);
     for (int k = 0; k < index_max; k++)
     {
         fprintf(temp_file, "%s", chunks[index_versions_proches[k]].data);
-        printf("affiche : %s ", chunks[index_versions_proches[k]].data);
-        printf("affiche 2 : %d", index_versions_proches[k]);
+        printf("affiche : %s \n", chunks[index_versions_proches[k]].data);
+        printf("affiche 2 : %d \n", index_versions_proches[k]);
     }
     fclose(temp_file);
     printf("hello %s", nom_fichier);

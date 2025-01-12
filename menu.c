@@ -181,9 +181,9 @@ void menu()
         {
             // parcourir_dossier("/home/luna/Desktop/Test", "/home/luna/Desktop/LP25/Save");
             // recup_network("./test.txt", 1);
-            char *test = "test.txt";
-            char *test2 = "./test.txt";
-            recup_save_content(test, test2, 1, 0);
+            char *test = "fichier_test.txt";
+            char *test2 = "./fichier_test.txt";
+            recup_save_content(test, test2, 1, 1);
 
             break;
         }
